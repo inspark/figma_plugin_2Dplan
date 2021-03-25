@@ -2,7 +2,7 @@
 
 The **Plan constructor** plugin for figma allows you to export plan configuration into a json format that can be used with the [Inspark IoT Plan 2D widget](https://inspark.ru) package.
 
-## Installation
+## Installation [plugin publication in progress]
 
 1. Go to the [plan constructor plugin page](https://www.figma.com/community/plugin/954376915966420214/Plan-Constructor)
 2. Click on install in the top right corner
