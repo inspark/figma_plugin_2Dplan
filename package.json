@@ -1,0 +1,67 @@
+{
+  "name": "plan-constructor",
+  "version": "0.0.8",
+  "description": "Plan Constructor Figma plugin",
+  "main": "code.js",
+  "scripts": {
+    "start": "npm run test && npm run build-watch",
+    "build": "tsc-bundle tsconfig.json",
+    "build-watch": "npm run build -- --watch"
+  },
+  "author": "INSPARK ltd",
+  "license": "MIT",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.19.2",
+    "@typescript-eslint/eslint-plugin": "^4.15.1",
+    "@typescript-eslint/parser": "^4.15.1",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-es2015": "^6.24.1",
+    "eslint-plugin-typescript": "^0.14.0",
+    "standardx": "^7.0.0",
+    "typescript-bundle": "^1.0.17"
+  },
+  "dependencies": {
+    "@types/node": "^14.14.28",
+    "babel": "^6.23.0",
+    "figma-plugin-ds": "^0.1.8",
+    "typescript": "^4.1.5"
+  },
+  "standardx": {
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+      "@typescript-eslint"
+    ],
+    "global": [
+      "test",
+      "__uiFiles__",
+      "figma",
+      "PluginAPI",
+      "PaintStyle",
+      "GridStyle",
+      "TextStyle",
+      "LayoutGrid",
+      "FrameNode",
+      "SceneNode",
+      "PageNode",
+      "RectangleNode",
+      "ComponentNode",
+      "GridLayoutGrid",
+      "RowsColsLayoutGrid",
+      "EffectStyle",
+      "Effect",
+      "Paint",
+      "Transition",
+      "Easing",
+      "DirectionalTransition",
+      "expect"
+    ]
+  },
+  "eslintConfig": {
+    "rules": {
+      "default-param-last": 0,
+      "no-return-assign": 0,
+      "brace-style": 0
+    }
+  }
+}

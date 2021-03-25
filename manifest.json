@@ -1,0 +1,11 @@
+{
+  "name": "Plan Constructor",
+  "id": "954376915966420214",
+  "api": "1.0.0",
+  "main": "dist/plugin.js",
+  "ui": "ui.html",
+  "menu": [
+    {"name": "Export Plan Configuration File", "command": "export"},
+    {"name": "Help", "command": "help"}
+  ]
+}

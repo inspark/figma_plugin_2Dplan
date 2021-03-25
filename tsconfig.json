@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/@figma"
+    ],
+    "outFile": "./dist/plugin.js",
+    "sourceMap": false,
+    "esModuleInterop": true,
+    "rootDir": "./"
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "src/**/_*"
+  ],
+  "files": ["src/code.ts"]
+}
