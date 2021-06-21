@@ -46,7 +46,7 @@ if (figma.currentPage.selection.length === 1) {
                                 'template': 'multisensorTemplate',
                                 'top': (device.y / frameHeight) * 100,
                                 'left': (device.x / frameWidth) * 100,
-                                'placement': 'right'
+                                'placement': 'auto'
                             };
                             config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
                                 'temperature': {
@@ -73,7 +73,7 @@ if (figma.currentPage.selection.length === 1) {
                                 'template': 'reedSwitchTemplate',
                                 'top': (device.y / frameHeight) * 100,
                                 'left': (device.x / frameWidth) * 100,
-                                'placement': 'left'
+                                'placement': 'auto'
                             };
                             config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
                                 'reed_switch': {
@@ -88,7 +88,7 @@ if (figma.currentPage.selection.length === 1) {
                                 'template': 'doorStateTemplate',
                                 'top': (device.y / frameHeight) * 100,
                                 'left': (device.x / frameWidth) * 100,
-                                'placement': 'left'
+                                'placement': 'auto'
                             };
                             config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
                                 'door_reed_switch': {
@@ -103,7 +103,7 @@ if (figma.currentPage.selection.length === 1) {
                                 'template': 'cameraTemplate',
                                 'top': (device.y / frameHeight) * 100,
                                 'left': (device.x / frameWidth) * 100,
-                                'placement': 'left',
+                                'placement': 'auto',
                                 "direction": 0
                             };
                             config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
@@ -135,7 +135,6 @@ if (figma.currentPage.selection.length === 1) {
                             };
                         }
                         if (device.mainComponent.name === 'lightline') {
-                            console.log('lightline rotation angle: ', device.rotation);
                             config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
                             config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
                             config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
@@ -144,11 +143,73 @@ if (figma.currentPage.selection.length === 1) {
                                 'left': (device.x / frameWidth) * 100,
                                 'length': (device.height / frameHeight) * 100,
                                 'rotation_angle': device.rotation,
-                                'placement': 'left'
+                                'placement': 'auto'
                             };
                             config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
                                 'light_line': {
                                     'title': 'Light line'
+                                }
+                            };
+                        }
+                        if (device.mainComponent.name === 'fancoil') {
+                            config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
+                            config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
+                            config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                                'template': 'fancoilTemplate',
+                                'top': (device.y / frameHeight) * 100,
+                                'left': (device.x / frameWidth) * 100,
+                                'placement': 'auto'
+                            };
+                            config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
+                                'speed': {
+                                    'title': 'Blowing speed',
+                                    'item_type': 'ITEM_TYPE.single',
+                                    'param_type': 'PARAM_TYPE.value'
+                                },
+                                'operating_mode': {
+                                    'title': 'Operating mode',
+                                    'item_type': 'ITEM_TYPE.single',
+                                    'param_type': 'PARAM_TYPE.value'
+                                },
+                                'control_flag': {
+                                    'title': 'Control flag',
+                                    'item_type': 'ITEM_TYPE.single',
+                                    'param_type': 'PARAM_TYPE.value'
+                                }
+                            };
+                        }
+                        if (device.mainComponent.name === 'ventilation') {
+                            config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
+                            config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
+                            config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                                'template': 'ventilationTemplate',
+                                'top': (device.y / frameHeight) * 100,
+                                'left': (device.x / frameWidth) * 100,
+                                'placement': 'auto'
+                            };
+                            config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
+                                'mode': {
+                                    'title': 'Work mode on/off'
+                                },
+                                'error_code': {
+                                    'title': 'Error code',
+                                    'item_type': 'ITEM_TYPE.single',
+                                    'param_type': 'PARAM_TYPE.value'
+                                },
+                                'filter_contamination': {
+                                    'title': 'Filter contamination',
+                                    'item_type': 'ITEM_TYPE.single',
+                                    'param_type': 'PARAM_TYPE.value'
+                                },
+                                'rotation_speed': {
+                                    'title': 'Rotation speed',
+                                    'item_type': 'ITEM_TYPE.single',
+                                    'param_type': 'PARAM_TYPE.value'
+                                },
+                                'temperature_in_channel': {
+                                    'title': 'Temperature in channel',
+                                    'item_type': 'ITEM_TYPE.single',
+                                    'param_type': 'PARAM_TYPE.value'
                                 }
                             };
                         }
