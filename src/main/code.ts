@@ -95,6 +95,24 @@ if (figma.currentPage.selection.length === 1) {
               }
             }
   
+            if (device.mainComponent.parent.name === 'mnemoscheme/switch') {
+              config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
+              config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
+              config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'template': 'mnemonicSwitchTemplate',
+                'top': (device.y / frameHeight) * 100,
+                'left': (device.x / frameWidth) * 100,
+                'width': device.width,
+                'rotation_angle': device.rotation,
+                'placement': 'auto'
+              }
+              config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
+                'mnemoscheme_switch': {
+                  'title': 'Mnemoscheme switch state'
+                }
+              }
+            }
+  
             if (device.mainComponent.name === 'camera') {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.value';
