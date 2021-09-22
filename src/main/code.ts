@@ -99,7 +99,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
-                'template': 'mnemonicSwitchTemplate',
+                'template': 'mnemoschemeSwitchTemplate',
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
                 'width': device.width,
