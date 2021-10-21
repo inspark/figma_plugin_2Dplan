@@ -121,7 +121,7 @@ if (figma.currentPage.selection.length === 1) {
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
                 'placement': 'auto',
-                "direction": 0
+                "direction": -(device.rotation)
               }
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
                 'channel': {
