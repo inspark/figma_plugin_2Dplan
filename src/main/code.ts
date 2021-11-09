@@ -9,7 +9,6 @@ if (figma.currentPage.selection.length === 1) {
     let zoneCount = 0;
   
     for (const groupName of Object.keys(figma.currentPage.selection[0].children)) {
-      console.log(groupName);
       if (selection.children[groupName].type === "GROUP") {
         zoneCount++;
         let zone = selection.children[groupName]
@@ -23,19 +22,15 @@ if (figma.currentPage.selection.length === 1) {
         let deviceCount = 0;
         for (const device of zone.children) {
           
-          if (device.type === "INSTANCE") {
-            console.log('node Instance selected');
-            console.log(device);
+          if (device.type === "INSTANCE" && device.visible === true) {
             deviceCount++;
             let deviceName = device.name;
-            console.log(deviceName);
             config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount] = {
               'title': deviceName,
               'items': {}
             };
   
             if (device.mainComponent.name === 'multisensor') {
-              console.log(device.x);
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.value';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
@@ -234,12 +229,76 @@ if (figma.currentPage.selection.length === 1) {
                 }
               }
             }
+  
+            if (device.mainComponent.parent.name === 'universal') {
+              config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
+              config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
+              config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'template': 'universalTemplate',
+                'device_type': device.mainComponent.name.match(/=([^ ]*)/)[1],
+                'top': (device.y / frameHeight) * 100,
+                'left': (device.x / frameWidth) * 100,
+                'placement': 'auto',
+                'icon_path': device.children[0].mainComponent?.children[0]?.fillGeometry
+              };
+              config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
+                'parameter_1': {
+                  'title': 'Parameter 1',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                },
+                'parameter_2': {
+                  'title': 'Parameter 2',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                },
+                'parameter_3': {
+                  'title': 'Parameter 3',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                },
+                'parameter_4': {
+                  'title': 'Parameter 4',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                },
+                'parameter_5': {
+                  'title': 'Parameter 5',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                },
+                'parameter_6': {
+                  'title': 'Parameter 6',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                },
+                'parameter_7': {
+                  'title': 'Parameter 7',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                },
+                'parameter_8': {
+                  'title': 'Parameter 8',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                },
+                'parameter_9': {
+                  'title': 'Parameter 9',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                },
+                'parameter_10': {
+                  'title': 'Parameter 10',
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                }
+              }
+            }
           }
         }
       }
       
       console.log(config);
-      console.log(JSON.stringify(config));
     }
 
   } else {
