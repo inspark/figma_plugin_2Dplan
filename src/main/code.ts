@@ -2,6 +2,15 @@
 let config = {};
 const selection: SceneNode = figma.currentPage.selection[0];
 
+function isJsonString(str) {
+  try {
+      JSON.parse(str);
+  } catch (e) {
+      return false;
+  }
+  return true;
+}
+
 if (figma.currentPage.selection.length === 1) {
   if (selection.type === 'FRAME') {
     let frameWidth = figma.currentPage.selection[0].width;
@@ -235,12 +244,21 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
                 'template': 'universalTemplate',
-                'device_type': device.mainComponent.name.match(/=([^ ]*)/)[1],
+                'device_type_id': device.mainComponent?.id,
+                'device_type_en': device.variantProperties['Device type (en)'],
+                'device_type_ru': device.variantProperties['Device type (ru)'],
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
                 'placement': 'auto',
                 'icon_path': device.children[0].mainComponent?.children[0]?.fillGeometry
               };
+              if (isJsonString(device.mainComponent.description)) {
+                config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data']['device_type_description_en'] = JSON.parse(device.mainComponent.description).en,
+                config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data']['device_type_description_ru'] = JSON.parse(device.mainComponent.description).ru
+              } else {
+                config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data']['device_type_description_en'] = '',
+                config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data']['device_type_description_ru'] = ''
+              }
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount].items = {
                 'parameter_1': {
                   'title': 'Parameter 1',
