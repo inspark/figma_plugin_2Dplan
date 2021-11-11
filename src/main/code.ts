@@ -250,7 +250,9 @@ if (figma.currentPage.selection.length === 1) {
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
                 'placement': 'auto',
-                'icon_path': device.children[0].mainComponent?.children[0]?.fillGeometry
+                'icon_path': device.children[0].mainComponent?.children[0]?.fillGeometry,
+                'icon_path_x': device.children[0].mainComponent?.children[0]?.x,
+                'icon_path_y': device.children[0].mainComponent?.children[0]?.y,
               };
               if (isJsonString(device.mainComponent.description)) {
                 config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data']['device_type_description_en'] = JSON.parse(device.mainComponent.description).en,
