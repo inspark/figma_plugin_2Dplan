@@ -43,6 +43,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.value';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'title': deviceName,
                 'template': 'multisensorTemplate',
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
@@ -71,6 +72,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'title': deviceName,
                 'template': 'reedSwitchTemplate',
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
@@ -87,6 +89,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'title': deviceName,
                 'template': 'doorStateTemplate',
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
@@ -103,6 +106,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'title': deviceName,
                 'template': 'mnemoschemeSwitchTemplate',
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
@@ -121,6 +125,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.value';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'title': deviceName,
                 'template': 'cameraTemplate',
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
@@ -160,6 +165,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'title': deviceName,
                 'template': 'lightLineTemplate',
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
@@ -178,6 +184,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'title': deviceName,
                 'template': 'fancoilTemplate',
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
@@ -207,6 +214,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'title': deviceName,
                 'template': 'ventilationTemplate',
                 'top': (device.y / frameHeight) * 100,
                 'left': (device.x / frameWidth) * 100,
