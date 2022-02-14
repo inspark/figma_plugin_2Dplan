@@ -251,6 +251,7 @@ if (figma.currentPage.selection.length === 1) {
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['item_type'] = 'ITEM_TYPE.single';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['param_type'] = 'PARAM_TYPE.signal';
               config[zoneName + '_' + zoneCount].items[deviceName + '_' + deviceCount]['custom_data'] = {
+                'title': deviceName,
                 'template': 'universalTemplate',
                 'device_type_id': device.mainComponent?.id,
                 'device_type_en': device.variantProperties['Device type (en)'],
