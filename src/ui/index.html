@@ -1,60 +1,142 @@
+<link rel="stylesheet" href="https://static.figma.com/api/figma-extension-api-0.0.1.css">
+<h2>Преобразуйте конфигурацию плана (json) в редактируемые настройки</h2>
+
+<label for="avatar">Загрузите конфиграцию плана (json):</label>
+
+<input type="file"
+       id="planConfiguration" name="configuration"
+       accept=".json"/>
+<div id="preview"></div>
+
+<script src="./scripts/jszip.min.js"></script>
 <script>
-    const downloadJson = (json, filename) => {
-      // Create an object URL for the blob object
-      var json = "data:text/json;charset=utf-8," + encodeURIComponent(json);
-      // Create a new anchor element
-      const a = document.createElement('a')
-      // Set the href and download attributes for the anchor element
-      // You can optionally set other attributes like `title`, etc
-      // Especially, if the anchor element will be attached to the DOM
-      a.download = filename || 'download';
-      a.title = filename || 'download';
-      a.href = json;
-      // Click handler that releases the object URL after the element has been clicked
-      // This is required for one-off downloads of the blob content
-      const clickHandler = () => {
-        setTimeout(() => {
-          URL.revokeObjectURL(url);
-          this.removeEventListener('click', clickHandler);
-        }, 10);
-      };
-      // Add the click event listener on the anchor element
-      // Comment out this line if you don't want a one-off download of the blob content
-      // a.addEventListener('click', clickHandler, false);
-      // Programmatically trigger a click on the anchor element
-      // Useful if you want the download to happen automatically
-      // Without attaching the anchor element to the DOM
-      // Comment out this line if you don't want an automatic download of the blob content
-      a.click();
-      // Return the anchor element
-      // Useful if you want a reference to the element
-      // in order to attach it to the DOM or use it in some other way
-      // return a;
-    }
   
-    onmessage = (event) => {
-      let message = event.data.pluginMessage;
-      console.log('message', message);
-      if (message.command === "export") {
-        downloadJson(message.data.data, message.data.filename)
-        parent.postMessage({
-          pluginMessage: {
-            command: 'closePlugin',
-            notification: '🎉 Plan configuration export succesfull!'
+  async function fileToJSON(file) {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader()
+      fileReader.onload = event => resolve(JSON.parse(event.target.result))
+      fileReader.onerror = error => reject(error)
+      fileReader.readAsText(file)
+    })
+  }
+
+  function generateSettings(config) {
+    let settings = {};
+    if (config){
+      settings = JSON.parse(JSON.stringify(config));
+      console.log('settins in generateSettings: ', settings);
+
+      for (const zone of Object.keys(settings)) {
+        if (settings[zone].hasOwnProperty('items')) {
+          delete settings[zone].item_type;
+          delete settings[zone].title;
+          settings[zone] = Object.assign(settings[zone], settings[zone].items)
+          delete settings[zone].items;
+
+          for (const device of Object.keys(settings[zone])) {
+            delete settings[zone][device].param_type;
+            delete settings[zone][device].item_type;
+            delete settings[zone][device].items;
           }
-        }, '*')
-      }
-  
-      // open help page
-      if (message.command === "help") {
-        window.open('https://github.com/inspark/figma_plugin_2Dplan')
-        parent.postMessage({
-          pluginMessage: {
-            command: 'closePlugin'
-          }
-        }, '*')
+        }      
       }
     }
+    
+    return settings
+  };
+
+  onmessage = async (event) => {
+    let message = event.data.pluginMessage;
+    if (message.command === "export") {
+      return new Promise(resolve => {
+
+        var config = message.data.data.configuration;
+        var settings = message.data.data.settings;
+
+        let zip = new JSZip();
+        zip.file('plan_configuration.json', config, {base64: false});
+        zip.file('plan_settings.txt', settings, {base64: false});
+
+
+        zip.generateAsync({ type: 'blob' })
+        .then((blob) => {
+          const blobURL = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.className = 'button button--primary';
+          link.href = blobURL;
+          link.download = message.data.filename
+          link.click();
+          resolve();
+        });
+      })
+      .then(() => {
+        parent.postMessage({
+        pluginMessage: {
+          command: 'closePlugin',
+          notification: '🎉 Plan configuration export succesfull!'
+        }
+      }, '*')
+      });
+    }
+
+    if (message.command === "configToSettings") {
+      let config = {};
+      return new Promise(resolve => {
+        function onChange(event) {
+          var reader = new FileReader();
+          reader.onload = onReaderLoad;
+          reader.readAsText(event.target.files[0]);
+        }
+
+        function onReaderLoad(event){
+          let obj = JSON.parse(event.target.result);
+          resolve(obj);
+        }
+    
+        document.getElementById('planConfiguration').addEventListener('change', onChange);
+      })
+      .then((config) => generateSettings(config))
+      .then((settings) => {
+        const previewEl = document.getElementById('preview');
+
+        // add button that copy Settings
+        var btnCopySettinsEl = document.createElement('button');
+        btnCopySettinsEl.id = 'copySettingsBtn';
+        btnCopySettinsEl.innerText = 'Copy Settings';
+        btnCopySettinsEl.style.margin = '16px 0 8px 0';
+        previewEl.appendChild(btnCopySettinsEl);
+
+        // add textarea with Settings
+        const textareaWithSetting = document.createElement('textarea');
+        textareaWithSetting.value = JSON.stringify(settings, null, 2);
+        textareaWithSetting.style.cssText += 'width: 100%; height: 270px; resize: none';
+        previewEl.appendChild(textareaWithSetting);
+
+        // select textarea text and copy to clipboard
+        btnCopySettinsEl.onclick = function() {
+          textareaWithSetting.select();
+          document.execCommand('copy');
+        }
+      })
+      .then(() => {
+        parent.postMessage({
+        pluginMessage: {
+          notification: '🎉 Plan settings ready!'
+        }
+      }, '*')
+      });
+    }
+
+    // open help page
+    if (message.command === "help") {
+      window.open('https://github.com/inspark/figma_plugin_2Dplan')
+      parent.postMessage({
+        pluginMessage: {
+          command: 'closePlugin'
+        }
+      }, '*')
+    }
+  }
+  
   
   </script>
-  

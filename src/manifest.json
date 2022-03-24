@@ -8,7 +8,8 @@
     "figma"
   ],
   "menu": [
-    {"name": "Export Plan Configuration File", "command": "export"},
+    {"name": "Export Plan Assets", "command": "export"},
+    {"name": "Configuration to Settings", "command": "configToSettings"},
     {"name": "Help", "command": "help"}
   ]
 }

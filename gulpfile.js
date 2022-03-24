@@ -23,7 +23,10 @@ const purgecss = require('gulp-purgecss'); //remove unused css
 const del = require('del'); //plugin to delete temp files after build
 
 // TS Config
-const tsProject = ts.createProject('tsconfig.json', { noImplicitAny: true, outFile: 'code.js' });
+const tsProject = ts.createProject('tsconfig.json', { 
+    noImplicitAny: true, 
+    outFile: 'code.js'
+});
 
 // File paths
 const files = { 
@@ -32,6 +35,7 @@ const files = {
     tsPath: 'src/main/**/*.ts', //location of typescript files for the main plugin code that interfaces with the Figma API
     html: 'src/ui/index.html', //this is your main index file where you will create your UI markup
     manifest: 'src/manifest.json', //location of manifest file
+    figma: 'src/plan-2d-constructor.fig', //location of figma file
     assetsPath: 'src/ui/img/*.{png,gif,jpg,svg,jpeg}' //path to image assets for your UI
 }
 
@@ -104,10 +108,17 @@ function manifestTask() {
     );
 }
 
+//copy figma file to dist
+function figmaTask() {
+    return src([files.figma])
+        .pipe(dest('dist')
+    );
+}
+
 
 // Watch all key files for changes, if there is a change saved, create a build 
 function watchTask(){
-    watch([files.scssPath, files.jsPath, files.tsPath, files.html, files.manifest],
+    watch([files.scssPath, files.jsPath, files.tsPath, files.html, files.manifest, files.figma],
         {interval: 1000, usePolling: true}, 
         series(
             parallel(jsTask, tsTask),
@@ -115,6 +126,7 @@ function watchTask(){
             cssTask,
             htmlTask,
             manifestTask,
+            figmaTask,
             cleanUp
         )
     );    
@@ -128,6 +140,7 @@ exports.default = series(
     cssTask,
     htmlTask,
     manifestTask,
+    figmaTask,
     cleanUp,
     watchTask
 );
