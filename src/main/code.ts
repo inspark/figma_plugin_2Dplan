@@ -238,7 +238,9 @@ function generateConfig(selection: any) {
                     'top': (device.y / frameHeight) * 100,
                     'left': (device.x / frameWidth) * 100,
                     'placement': 'auto',
-                    'remote_control': device.variantProperties ? device.variantProperties['Remote control'] : ''
+                    'remote_control': device.variantProperties ? device.variantProperties['Remote control'] : '',
+                    'cooling': device.variantProperties ? device.variantProperties['Cooling'] : '',
+                    'heating': device.variantProperties ? device.variantProperties['Heating'] : ''
                   }
     
                   config[zoneId].items[deviceId].items = {
@@ -415,6 +417,8 @@ function generateSettings(config: any) {
           delete settings[zone][device].param_type;
           delete settings[zone][device].item_type;
           delete settings[zone][device].items;
+          delete settings[zone][device].title;
+          delete settings[zone][device].custom_data?.template;
         }
       }      
     }

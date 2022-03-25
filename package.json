@@ -1,6 +1,6 @@
 {
   "name": "plan-2d-configurator",
-  "version": "1.0.8",
+  "version": "1.1.1",
   "description": "Figma plugin that exports json config for Inspark IoT Plan 2D widget.",
   "main": "gulpfile.js",
   "scripts": {
