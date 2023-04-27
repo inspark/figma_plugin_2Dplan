@@ -12,6 +12,18 @@ function isJsonString(str) {
   return true;
 }
 
+function figmaRGBToWebRGB(color): any {
+  const rgb = [];
+  const namesRGB = ['r', 'g', 'b'];
+
+  namesRGB.forEach((e, i) => {
+    rgb[i] = Math.round(color[e] * 255)
+  })
+
+  if (color['a'] !== undefined) rgb[3] = Math.round(color['a'] * 100) / 100
+  return rgb
+}
+
 function generateConfig(selection: any) {
   return new Promise(function(resolve, reject) {
     if (selection.length === 1) {
@@ -19,7 +31,7 @@ function generateConfig(selection: any) {
         let frameWidth = selection[0].width;
         let frameHeight = selection[0].height;
         let zoneCount = 0;
-      
+
         for (const groupName of Object.keys(selection[0].children)) {
           if (selection[0].children[groupName].type === "GROUP") {
             
@@ -222,6 +234,21 @@ function generateConfig(selection: any) {
                     'rotation_angle': -device.rotation,
                     'placement': 'auto'
                   }
+
+                  const illuminationRect = device.findChild(n => n.name === 'illumination');
+
+                  if ( illuminationRect ) {
+                    config[zoneId].items[deviceId]['custom_data']['bs_type'] = illuminationRect.effects[0].type === 'INNER_SHADOW' ? 'inset' : '';
+                    config[zoneId].items[deviceId]['custom_data']['bs_offset_x_on'] = illuminationRect.effects[0].offset.x;
+                    config[zoneId].items[deviceId]['custom_data']['bs_offset_y_on'] = illuminationRect.effects[0].offset.y;
+                    config[zoneId].items[deviceId]['custom_data']['bs_blur_radius_on'] = illuminationRect.effects[0].radius;
+                    config[zoneId].items[deviceId]['custom_data']['bs_spread_radius_on'] = illuminationRect.effects[0].spread;
+                    config[zoneId].items[deviceId]['custom_data']['bs_color_on'] = figmaRGBToWebRGB(illuminationRect.effects[0].color);
+                    config[zoneId].items[deviceId]['custom_data']['fill_on'] = figmaRGBToWebRGB(illuminationRect.fills[0].color);
+                    config[zoneId].items[deviceId]['custom_data']['opacity_on'] = illuminationRect.fills[0].opacity;
+                  }
+
+
                   config[zoneId].items[deviceId].items = {
                     'light_line': {
                       'title': 'Light line'
