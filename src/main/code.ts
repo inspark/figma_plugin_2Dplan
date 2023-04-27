@@ -288,6 +288,50 @@ function generateConfig(selection: any) {
                     }
                   }
                 }
+
+                if ( deviceInstanceName === 'conditioner' ) {
+                  config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
+                  config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
+                  config[zoneId].items[deviceId]['custom_data'] = {
+                    'title': deviceName,
+                    'template': 'conditionerTemplate',
+                    'top': (device.y / frameHeight) * 100,
+                    'left': (device.x / frameWidth) * 100,
+                    'placement': 'auto',
+                    'cooling': device.findChild(n => n.name === 'Cooling') ? device.findChild(n => n.name === 'Cooling').visible : '',
+                    'heating': device.findChild(n => n.name === 'Heating') ? device.findChild(n => n.name === 'Heating').visible : '',
+                    'drying': device.findChild(n => n.name === 'Drying') ? device.findChild(n => n.name === 'Drying').visible : '',
+                    'auto': device.findChild(n => n.name === 'Auto') ? device.findChild(n => n.name === 'Auto').visible : '',
+                  }
+
+                  config[zoneId].items[deviceId].items = {
+                    'state': {
+                      'title': 'State (on|off)',
+                      'item_type': 'ITEM_TYPE.single',
+                      'param_type': 'PARAM_TYPE.value'
+                    },
+                    'operating_mode': {
+                      'title': 'Operating mode',
+                      'item_type': 'ITEM_TYPE.single',
+                      'param_type': 'PARAM_TYPE.value'
+                    },
+                    'speed': {
+                      'title': 'Blowing speed',
+                      'item_type': 'ITEM_TYPE.single',
+                      'param_type': 'PARAM_TYPE.value'
+                    },
+                    'temperature_setpoint': {
+                      'title': 'Room temperature setpoint',
+                      'item_type': 'ITEM_TYPE.single',
+                      'param_type': 'PARAM_TYPE.value'
+                    },
+                    'alarm': {
+                      'title': 'Alarm',
+                      'item_type': 'ITEM_TYPE.single',
+                      'param_type': 'PARAM_TYPE.value'
+                    }
+                  }
+                }
       
                 if ( deviceInstanceName === 'ventilation' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
