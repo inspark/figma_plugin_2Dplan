@@ -230,7 +230,7 @@ function generateConfig(selection: any) {
                     'template': 'lightLineTemplate',
                     'top': (device.y / frameHeight) * 100,
                     'left': (device.x / frameWidth) * 100,
-                    'length': Math.sqrt(Math.pow(device.height * Math.cos(device.rotation)/frameHeight, 2) + Math.pow(device.height * Math.sin(device.rotation)/frameWidth, 2)) * 100,
+                    'length': device.height * 100 / frameHeight,
                     'rotation_angle': -device.rotation,
                     'placement': 'auto'
                   }
@@ -540,7 +540,7 @@ if (figma.command === 'export') {
 // Open converter
 // Open config to settings converter
 if (figma.command === 'configToSettings') {
-  figma.showUI(__html__, {title: 'Convert Plan Configuration to Editable Settings',width: 600, height: 400});
+  figma.showUI(__html__, {width: 600, height: 400});
   figma.ui.postMessage({
     command: 'configToSettings'
   })
