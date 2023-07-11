@@ -34,7 +34,7 @@ function generateConfig(selection: any) {
 
         for (const groupName of Object.keys(selection[0].children)) {
           if (selection[0].children[groupName].type === "GROUP") {
-            
+
             let zone = selection[0].children[groupName];
             let zoneId = 'zone' + '_' + zone.id;
             let zoneName = zone.name;
@@ -43,19 +43,19 @@ function generateConfig(selection: any) {
               'item_type': "ITEM_TYPE.single",
               'items': {}
             };
-    
+
             config[zoneId]['custom_data'] = {
               'title': zoneName,
             }
-      
+
             let deviceCount = 0;
 
             for (const device of zone.children) {
-              
+
               if (device.type === "INSTANCE" && device.visible === true) {
                 deviceCount++;
-    
-    
+
+
                 // В качестве названий объекта используется id элемета из Figma + название компонента.
                 // Для обеспечения совместимости с файлом figma предыдущей версии добавлена проверка parent
 
@@ -66,15 +66,15 @@ function generateConfig(selection: any) {
                 } else {
                   deviceId = device.mainComponent.name + '_' + device.id;
                 }
-    
-                
-    
-    
+
+
+
+
                 // Имя устройства, которое выводится в конфигураторе виджета берется из значений Title варианта фигмы, если их нет, то из значений Title
                 // варианта мастер-компонента.
-    
+
                 let deviceName = '';
-    
+
                 if (device.name) {
                   deviceName = device.name;
                 } else {
@@ -94,12 +94,12 @@ function generateConfig(selection: any) {
                 }
 
 
-                
+
                 config[zoneId].items[deviceId] = {
                   'title': deviceName,
                   'items': {}
                 };
-      
+
                 if ( deviceInstanceName === 'multisensor' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.value';
@@ -108,7 +108,12 @@ function generateConfig(selection: any) {
                     'template': 'multisensorTemplate',
                     'top': (device.y / frameHeight) * 100,
                     'left': (device.x / frameWidth) * 100,
-                    'placement': 'auto'
+                    'placement': 'auto',
+                    'has_temperature_filter': device.variantProperties ? device.variantProperties['Temperature'] : '',
+                    'has_humidity_filter': device.variantProperties ? device.variantProperties['Humidity'] : '',
+                    'has_co2_filter': device.variantProperties ? device.variantProperties['CO2'] : '',
+                    'has_noise_filter': device.variantProperties ? device.variantProperties['Noise'] : '',
+                    'has_lighting_filter': device.variantProperties ? device.variantProperties['Lightness'] : '',
                   }
                   config[zoneId].items[deviceId].items = {
                     'temperature': {
@@ -128,7 +133,7 @@ function generateConfig(selection: any) {
                     }
                   }
                 }
-      
+
                 if ( deviceInstanceName === 'reedswitch' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
@@ -145,7 +150,7 @@ function generateConfig(selection: any) {
                     }
                   }
                 }
-      
+
                 if ( deviceInstanceName === 'door' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
@@ -162,7 +167,7 @@ function generateConfig(selection: any) {
                     }
                   }
                 }
-      
+
                 if ( deviceInstanceName === 'mnemoscheme/switch' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
@@ -181,7 +186,7 @@ function generateConfig(selection: any) {
                     }
                   }
                 }
-      
+
                 if ( deviceInstanceName === 'camera' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.value';
@@ -221,7 +226,7 @@ function generateConfig(selection: any) {
                     },
                   }
                 }
-      
+
                 if ( deviceInstanceName === 'lightline' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
@@ -255,7 +260,7 @@ function generateConfig(selection: any) {
                     }
                   }
                 }
-      
+
                 if ( deviceInstanceName === 'fancoil' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
@@ -269,7 +274,7 @@ function generateConfig(selection: any) {
                     'cooling': device.variantProperties ? device.variantProperties['Cooling'] : '',
                     'heating': device.variantProperties ? device.variantProperties['Heating'] : ''
                   }
-    
+
                   config[zoneId].items[deviceId].items = {
                     'speed': {
                       'title': 'Blowing speed',
@@ -332,7 +337,7 @@ function generateConfig(selection: any) {
                     }
                   }
                 }
-      
+
                 if ( deviceInstanceName === 'ventilation' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
@@ -373,10 +378,10 @@ function generateConfig(selection: any) {
                       'param_type': 'PARAM_TYPE.value'
                     }
                   }
-                  
+
 
                 }
-      
+
                 if ( deviceInstanceName === 'universal' ) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
@@ -394,11 +399,11 @@ function generateConfig(selection: any) {
                     'icon_path_y': device.children[0].mainComponent?.children[0]?.y,
                   };
                   if (isJsonString(device.mainComponent.description)) {
-                    config[zoneId].items[deviceId]['custom_data']['device_type_description_en'] = JSON.parse(device.mainComponent.description).en,
-                    config[zoneId].items[deviceId]['custom_data']['device_type_description_ru'] = JSON.parse(device.mainComponent.description).ru
+                    config[zoneId].items[deviceId]['custom_data']['device_type_description_en'] = JSON.parse(device.mainComponent.description).en;
+                    config[zoneId].items[deviceId]['custom_data']['device_type_description_ru'] = JSON.parse(device.mainComponent.description).ru;
                   } else {
-                    config[zoneId].items[deviceId]['custom_data']['device_type_description_en'] = '',
-                    config[zoneId].items[deviceId]['custom_data']['device_type_description_ru'] = ''
+                    config[zoneId].items[deviceId]['custom_data']['device_type_description_en'] = '';
+                    config[zoneId].items[deviceId]['custom_data']['device_type_description_ru'] = '';
                   }
                   config[zoneId].items[deviceId].items = {
                     'parameter_1': {
@@ -471,7 +476,7 @@ function generateConfig(selection: any) {
       figma.closePlugin();
     }
   });
-};
+}
 
 function generateSettings(config: any) {
   if (config){
@@ -491,12 +496,12 @@ function generateSettings(config: any) {
           delete settings[zone][device].title;
           delete settings[zone][device].custom_data?.template;
         }
-      }      
+      }
     }
   }
-  
+
   return settings
-};
+}
 
 
 /**
@@ -529,12 +534,12 @@ if (figma.command === 'export') {
             "settings": JSON.stringify(settings, null, 2)
           }
         },
-        
+
       })
     }
   )
   .catch(error => console.log(error));
-  
+
 }
 
 // Open converter
