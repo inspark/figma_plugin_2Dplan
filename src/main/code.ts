@@ -270,7 +270,7 @@ function generateConfig(selection: any) {
                     'top': (device.y / frameHeight) * 100,
                     'left': (device.x / frameWidth) * 100,
                     'placement': 'auto',
-                    'remote_control': device.variantProperties ? device.variantProperties['Remote control'] : '',
+                    'remote_control': device.variantProperties ? device.variantProperties['Remote control'] : device.componentProperties,
                     'cooling': device.variantProperties ? device.variantProperties['Cooling'] : '',
                     'heating': device.variantProperties ? device.variantProperties['Heating'] : ''
                   }
