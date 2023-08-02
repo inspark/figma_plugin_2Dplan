@@ -270,7 +270,7 @@ function generateConfig(selection: any) {
                     'top': (device.y / frameHeight) * 100,
                     'left': (device.x / frameWidth) * 100,
                     'placement': 'auto',
-                    'remote_control': device.variantProperties ? device.variantProperties['Remote control'] : '',
+                    'remote_control': device.variantProperties ? device.variantProperties['Remote control'] : device.componentProperties,
                     'cooling': device.variantProperties ? device.variantProperties['Cooling'] : '',
                     'heating': device.variantProperties ? device.variantProperties['Heating'] : ''
                   }
@@ -288,6 +288,36 @@ function generateConfig(selection: any) {
                     },
                     'control_flag': {
                       'title': 'Control flag',
+                      'item_type': 'ITEM_TYPE.single',
+                      'param_type': 'PARAM_TYPE.value'
+                    }
+                  }
+                }
+
+                if ( deviceInstanceName === 'fancoil3relay' ) {
+                  config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
+                  config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
+                  config[zoneId].items[deviceId]['custom_data'] = {
+                    'title': deviceName,
+                    'template': 'fancoil3relayTemplate',
+                    'top': (device.y / frameHeight) * 100,
+                    'left': (device.x / frameWidth) * 100,
+                    'placement': 'auto'
+                  }
+
+                  config[zoneId].items[deviceId].items = {
+                    'relay_1': {
+                      'title': 'Relay 1',
+                      'item_type': 'ITEM_TYPE.single',
+                      'param_type': 'PARAM_TYPE.value'
+                    },
+                    'relay_2': {
+                      'title': 'Relay 2',
+                      'item_type': 'ITEM_TYPE.single',
+                      'param_type': 'PARAM_TYPE.value'
+                    },
+                    'relay_3': {
+                      'title': 'Relay 3',
                       'item_type': 'ITEM_TYPE.single',
                       'param_type': 'PARAM_TYPE.value'
                     }
