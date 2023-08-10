@@ -24,6 +24,39 @@ function figmaRGBToWebRGB(color): any {
   return rgb
 }
 
+function getVectorNodePath(zoneNode: GroupNode) {
+  if ( zoneNode ) {
+    for (const node of zoneNode.children) {
+
+      if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' ) && node.visible === true) {
+
+        // Duplicate node inside the same Group
+        const clonedNode = node.clone();
+        zoneNode.insertChild(0, clonedNode);
+        clonedNode.x = node.x;
+        clonedNode.y = node.y;
+
+        // Flatten node to Vector, check that path is closed
+        const flattenedNode = figma.flatten([clonedNode], zoneNode);
+
+        if ( flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
+          const svg_path = flattenedNode.vectorPaths;
+          svg_path[0].x = flattenedNode.x;
+          svg_path[0].y = flattenedNode.y;
+          flattenedNode.remove();
+          return svg_path
+        } else {
+          console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.')
+        }
+        return
+      } else {
+        console.log('Не найдено формы для зоны.');
+        return
+      }
+    }
+  }
+}
+
 function generateConfig(selection: any) {
   return new Promise(function(resolve, reject) {
     if (selection.length === 1) {
@@ -33,7 +66,7 @@ function generateConfig(selection: any) {
         let zoneCount = 0;
 
         for (const groupName of Object.keys(selection[0].children)) {
-          if (selection[0].children[groupName].type === "GROUP") {
+          if ( selection[0].children[groupName].type === "GROUP" && selection[0].children[groupName].visible === true ) {
 
             let zone = selection[0].children[groupName];
             let zoneId = 'zone' + '_' + zone.id;
@@ -44,8 +77,11 @@ function generateConfig(selection: any) {
               'items': {}
             };
 
+            getVectorNodePath(zone);
+
             config[zoneId]['custom_data'] = {
               'title': zoneName,
+              'vector_paths': getVectorNodePath(selection[0].children[groupName])
             }
 
             let deviceCount = 0;

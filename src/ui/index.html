@@ -1,7 +1,7 @@
 <link rel="stylesheet" href="https://static.figma.com/api/figma-extension-api-0.0.1.css">
 <h2>Преобразуйте конфигурацию плана (json) в редактируемые настройки</h2>
 
-<label for="avatar">Загрузите конфиграцию плана (json):</label>
+<label for="planConfiguration">Загрузите конфиграцию плана (json):</label>
 
 <input type="file"
        id="planConfiguration" name="configuration"
@@ -10,7 +10,7 @@
 
 <script src="./scripts/jszip.min.js"></script>
 <script>
-  
+
   async function fileToJSON(file) {
     return new Promise((resolve, reject) => {
       const fileReader = new FileReader()
@@ -40,10 +40,10 @@
             delete settings[zone][device].title;
             delete settings[zone][device].custom_data?.template;
           }
-        }      
+        }
       }
     }
-    
+
     return settings
   };
 
@@ -94,7 +94,7 @@
           let obj = JSON.parse(event.target.result);
           resolve(obj);
         }
-    
+
         document.getElementById('planConfiguration').addEventListener('change', onChange);
       })
       .then((config) => generateSettings(config))
@@ -139,6 +139,6 @@
       }, '*')
     }
   }
-  
-  
+
+
   </script>
