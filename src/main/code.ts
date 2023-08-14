@@ -1,7 +1,8 @@
 // @ts-nocheck
 let config = {};
 let settings = {};
-// const selection: SceneNode = figma.currentPage.selection[0];
+let svg;
+const selection: SceneNode = figma.currentPage.selection[0];
 
 function isJsonString(str) {
   try {
@@ -24,10 +25,14 @@ function figmaRGBToWebRGB(color): any {
   return rgb
 }
 
+//
 function getVectorNodePath(zoneNode: GroupNode) {
   if ( zoneNode ) {
     for (const node of zoneNode.children) {
       if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' ) && node.visible === true) {
+
+
+
 
         // Duplicate node inside the same Group
         const clonedNode = node.clone();
@@ -54,7 +59,23 @@ function getVectorNodePath(zoneNode: GroupNode) {
   }
 }
 
-function generateConfig(selection: any) {
+function exportNode(format) {
+  (async () => {
+    // Create a triangle using the VectorPath API
+    const vector = figma.createVector()
+    vector.vectorPaths = [{
+      windingRule: "EVENODD",
+      data: "M 0 100 L 100 100 L 50 0 Z",
+    }]
+
+    // Export the vector to SVG
+    const svg = await selection[0].exportAsync({ format: 'SVG_STRING' })
+    console.log(svg);
+  })()
+}
+
+function generateSVG(selection: any) {
+  console.log(selection);
   return new Promise(function(resolve, reject) {
     if (selection.length === 1) {
       if (selection[0].type === 'FRAME') {
@@ -62,43 +83,171 @@ function generateConfig(selection: any) {
         let frameHeight = selection[0].height;
         let zoneCount = 0;
 
-        (async () => {
-          // Create a triangle using the VectorPath API
-          const vector = figma.createVector()
-          vector.vectorPaths = [{
-            windingRule: "EVENODD",
-            data: "M 0 100 L 100 100 L 50 0 Z",
-          }]
+        // Duplicate plan node to root
 
-          // Export the vector to SVG
-          const svg = await selection[0].exportAsync({ format: 'SVG_STRING' })
-          console.log(svg);
-        })()
+        // Create parent plan node
+        const planClone = selection[0].clone();
+
+        // Move
+        planClone.x = selection[0].x + selection[0].width * 2;
+        planClone.y = selection[0].y;
+
+        // Rename
+        planClone.name = '_' + selection[0].name;
+        let imageNode;
+
+        for (const groupName of Object.keys(planClone.children)) {
+          if (planClone.children[groupName] && planClone.children[groupName].type === "GROUP" && planClone.children[groupName].visible === true) {
+            const zone = planClone.children[groupName];
+            for (const node of zone.children) {
+              if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') && node.visible === true) {
+
+                // Flatten node to Vector, check that path is closed
+                const flattenedNode = figma.flatten([node], zone);
+
+                if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
+                  flattenedNode.name = zone.id;
+                } else {
+                  console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
+                  flattenedNode.remove();
+                }
+              } else {
+                node.remove();
+              }
+            }
+          } else {
+            imageNode = planClone.children[groupName];
+          }
+        }
+
+        imageNode.remove();
+
+
+        // (async () => {
+        //
+        //   // Export the vector to SVG
+        //   const _svg = await selection[0].exportAsync({ format: 'SVG_STRING' });
+        //   svg = _svg;
+        // })()
+
+
+
+        resolve(planClone);
+
+      } else {
+        reject(Error('Selection is not a frame. Please select one frame.'));
+        figma.notify('Selection is not a frame. Please select one frame.');
+        figma.closePlugin();
+      }
+    } else {
+      reject(Error('PPlease select only one frame to run plugin.'));
+      figma.notify('Please select only one frame to run plugin.');
+      figma.closePlugin();
+    }
+  });
+}
+
+async function exportSVG(node) {
+
+  // Export the vector to SVG
+  const _svg = await node.exportAsync({ format: 'SVG_STRING' });
+  return _svg;
+}
+
+function generateConfig(selection: any) {
+  return new Promise(function(resolve, reject) {
+    if (selection.length === 1) {
+      if (selection[0].type === 'FRAME') {
+        let frameWidth = selection[0].width;
+        let frameHeight = selection[0].height;
+        // let zoneCount = 0;
+        //
+        // // Duplicate plan node to root
+        //
+        // // Create parent plan node
+        // const planClone = selection[0].clone();
+        //
+        // // Move
+        // planClone.x = selection[0].x + selection[0].width * 2;
+        // planClone.y = selection[0].y;
+        //
+        // // Rename
+        // planClone.name = '_' + selection[0].name;
+        // let imageNode;
+        //
+        // for (const groupName of Object.keys(planClone.children)) {
+        //   if ( planClone.children[groupName] && planClone.children[groupName].type === "GROUP" && planClone.children[groupName].visible === true ) {
+        //     const zone = planClone.children[groupName];
+        //     for (const node of zone.children) {
+        //       if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION' ) && node.visible === true) {
+        //
+        //         // Flatten node to Vector, check that path is closed
+        //         const flattenedNode = figma.flatten([node], zone);
+        //
+        //         if ( flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
+        //           flattenedNode.name = zone.id;
+        //         } else {
+        //           console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
+        //           flattenedNode.remove();
+        //         }
+        //       } else {
+        //         node.remove();
+        //       }
+        //     }
+        //   } else {
+        //     imageNode = planClone.children[groupName];
+        //   }
+        // }
+        //
+        // imageNode.remove();
+
 
         for (const groupName of Object.keys(selection[0].children)) {
           if ( selection[0].children[groupName].type === "GROUP" && selection[0].children[groupName].visible === true ) {
 
-            let zone = selection[0].children[groupName];
-            let zoneId = 'zone' + '_' + zone.id;
-            let zoneName = zone.name;
+            const zone = selection[0].children[groupName];
+            const zoneId = 'zone' + '_' + zone.id;
+            const zoneName = zone.name;
+
             config[zoneId] = {
               'title': zoneName,
               'item_type': "ITEM_TYPE.single",
               'items': {}
             };
 
-            getVectorNodePath(zone);
-
             config[zoneId]['custom_data'] = {
               'title': zoneName,
-              'vector_paths': getVectorNodePath(selection[0].children[groupName])
+              'id': zone.id,
+              // 'vector_paths': getVectorNodePath(selection[0].children[groupName])
             }
 
             let deviceCount = 0;
 
-            for (const device of zone.children) {
+            for (const node of zone.children) {
+              if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' ) && node.visible === true) {
 
-              if (device.type === "INSTANCE" && device.visible === true) {
+                // Duplicate node inside the same Group
+                // const clonedNode = node.clone();
+                // console.log('planClone', planClone.name);
+                // planClone.insertChild(0, clonedNode);
+                // clonedNode.x = node.x;
+                // clonedNode.y = node.y;
+
+                // Flatten node to Vector, check that path is closed
+                // const flattenedNode = figma.flatten([clonedNode], zone);
+
+                // if ( flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
+                //   const svg_path = flattenedNode.vectorPaths;
+                //   flattenedNode.remove();
+                //
+                //   return svg_path
+                // } else {
+                //   console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.')
+                // }
+                // return
+              }
+
+              if (node.type === "INSTANCE" && node.visible === true) {
                 deviceCount++;
 
 
@@ -107,10 +256,10 @@ function generateConfig(selection: any) {
 
                 let deviceId = '';
 
-                if ( device.mainComponent.parent.type === "COMPONENT_SET" ) {
-                  deviceId = device.mainComponent.parent.name + '_' + device.id;
+                if ( node.mainComponent.parent.type === "COMPONENT_SET" ) {
+                  deviceId = node.mainComponent.parent.name + '_' + node.id;
                 } else {
-                  deviceId = device.mainComponent.name + '_' + device.id;
+                  deviceId = node.mainComponent.name + '_' + node.id;
                 }
 
 
@@ -121,22 +270,22 @@ function generateConfig(selection: any) {
 
                 let deviceName = '';
 
-                if (device.name) {
-                  deviceName = device.name;
+                if (node.name) {
+                  deviceName = node.name;
                 } else {
-                  if ( device.mainComponent.parent.type === "COMPONENT_SET" ) {
-                    deviceName = device.masterComponent.parent.name;
+                  if ( node.mainComponent.parent.type === "COMPONENT_SET" ) {
+                    deviceName = node.masterComponent.parent.name;
                   } else {
-                    deviceName = device.masterComponent.name;
+                    deviceName = node.masterComponent.name;
                   }
                 }
 
                 let deviceInstanceName = '';
 
-                if ( device.mainComponent.parent.type === "COMPONENT_SET" ) {
-                  deviceInstanceName = device.masterComponent.parent.name;
+                if ( node.mainComponent.parent.type === "COMPONENT_SET" ) {
+                  deviceInstanceName = node.masterComponent.parent.name;
                 } else {
-                  deviceInstanceName = device.masterComponent.name;
+                  deviceInstanceName = node.masterComponent.name;
                 }
 
 
@@ -152,14 +301,14 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'multisensorTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
                     'placement': 'auto',
-                    'has_temperature_filter': device.variantProperties ? device.variantProperties['Temperature'] : '',
-                    'has_humidity_filter': device.variantProperties ? device.variantProperties['Humidity'] : '',
-                    'has_co2_filter': device.variantProperties ? device.variantProperties['CO2'] : '',
-                    'has_noise_filter': device.variantProperties ? device.variantProperties['Noise'] : '',
-                    'has_lighting_filter': device.variantProperties ? device.variantProperties['Lightness'] : '',
+                    'has_temperature_filter': node.variantProperties ? node.variantProperties['Temperature'] : '',
+                    'has_humidity_filter': node.variantProperties ? node.variantProperties['Humidity'] : '',
+                    'has_co2_filter': node.variantProperties ? node.variantProperties['CO2'] : '',
+                    'has_noise_filter': node.variantProperties ? node.variantProperties['Noise'] : '',
+                    'has_lighting_filter': node.variantProperties ? node.variantProperties['Lightness'] : '',
                   }
                   config[zoneId].items[deviceId].items = {
                     'temperature': {
@@ -186,8 +335,8 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'reedSwitchTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
                     'placement': 'auto'
                   }
                   config[zoneId].items[deviceId].items = {
@@ -203,8 +352,8 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'doorStateTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
                     'placement': 'auto'
                   }
                   config[zoneId].items[deviceId].items = {
@@ -220,10 +369,10 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'mnemoschemeSwitchTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
-                    'width': device.width,
-                    'rotation_angle': device.rotation,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
+                    'width': node.width,
+                    'rotation_angle': node.rotation,
                     'placement': 'auto'
                   }
                   config[zoneId].items[deviceId].items = {
@@ -239,10 +388,10 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'cameraTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
                     'placement': 'auto',
-                    "direction": -(device.rotation)
+                    "direction": -(node.rotation)
                   }
                   config[zoneId].items[deviceId].items = {
                     'channel': {
@@ -279,14 +428,14 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'lightLineTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
-                    'length': device.height * 100 / frameHeight,
-                    'rotation_angle': -device.rotation,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
+                    'length': node.height * 100 / frameHeight,
+                    'rotation_angle': -node.rotation,
                     'placement': 'auto'
                   }
 
-                  const illuminationRect = device.findChild(n => n.name === 'illumination');
+                  const illuminationRect = node.findChild(n => n.name === 'illumination');
 
                   if ( illuminationRect ) {
                     config[zoneId].items[deviceId]['custom_data']['bs_type'] = illuminationRect.effects[0].type === 'INNER_SHADOW' ? 'inset' : '';
@@ -313,12 +462,12 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'fancoilTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
                     'placement': 'auto',
-                    'remote_control': device.variantProperties ? device.variantProperties['Remote control'] : '',
-                    'cooling': device.variantProperties ? device.variantProperties['Cooling'] : '',
-                    'heating': device.variantProperties ? device.variantProperties['Heating'] : ''
+                    'remote_control': node.variantProperties ? node.variantProperties['Remote control'] : '',
+                    'cooling': node.variantProperties ? node.variantProperties['Cooling'] : '',
+                    'heating': node.variantProperties ? node.variantProperties['Heating'] : ''
                   }
 
                   config[zoneId].items[deviceId].items = {
@@ -346,13 +495,13 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'conditionerTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
                     'placement': 'auto',
-                    'cooling': device.findChild(n => n.name === 'Cooling') ? device.findChild(n => n.name === 'Cooling').visible : '',
-                    'heating': device.findChild(n => n.name === 'Heating') ? device.findChild(n => n.name === 'Heating').visible : '',
-                    'drying': device.findChild(n => n.name === 'Drying') ? device.findChild(n => n.name === 'Drying').visible : '',
-                    'auto': device.findChild(n => n.name === 'Auto') ? device.findChild(n => n.name === 'Auto').visible : '',
+                    'cooling': node.findChild(n => n.name === 'Cooling') ? node.findChild(n => n.name === 'Cooling').visible : '',
+                    'heating': node.findChild(n => n.name === 'Heating') ? node.findChild(n => n.name === 'Heating').visible : '',
+                    'drying': node.findChild(n => n.name === 'Drying') ? node.findChild(n => n.name === 'Drying').visible : '',
+                    'auto': node.findChild(n => n.name === 'Auto') ? node.findChild(n => n.name === 'Auto').visible : '',
                   }
 
                   config[zoneId].items[deviceId].items = {
@@ -388,14 +537,14 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                   config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
                   let ventilation_description;
-                  if (isJsonString(device.mainComponent.description)) {
-                    ventilation_description = JSON.parse(device.mainComponent.description)
+                  if (isJsonString(node.mainComponent.description)) {
+                    ventilation_description = JSON.parse(node.mainComponent.description)
                   }
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'ventilationTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
                     'placement': 'auto',
                     'description': ventilation_description
                   }
@@ -434,19 +583,19 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'universalTemplate',
-                    'device_type_id': device.mainComponent?.id,
-                    'device_type_en': device.variantProperties['Device type (en)'],
-                    'device_type_ru': device.variantProperties['Device type (ru)'],
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
+                    'device_type_id': node.mainComponent?.id,
+                    'device_type_en': node.variantProperties['Device type (en)'],
+                    'device_type_ru': node.variantProperties['Device type (ru)'],
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
                     'placement': 'auto',
-                    'icon_path': device.children[0].mainComponent?.children[0]?.fillGeometry,
-                    'icon_path_x': device.children[0].mainComponent?.children[0]?.x,
-                    'icon_path_y': device.children[0].mainComponent?.children[0]?.y,
+                    'icon_path': node.children[0].mainComponent?.children[0]?.fillGeometry,
+                    'icon_path_x': node.children[0].mainComponent?.children[0]?.x,
+                    'icon_path_y': node.children[0].mainComponent?.children[0]?.y,
                   };
-                  if (isJsonString(device.mainComponent.description)) {
-                    config[zoneId].items[deviceId]['custom_data']['device_type_description_en'] = JSON.parse(device.mainComponent.description).en;
-                    config[zoneId].items[deviceId]['custom_data']['device_type_description_ru'] = JSON.parse(device.mainComponent.description).ru;
+                  if (isJsonString(node.mainComponent.description)) {
+                    config[zoneId].items[deviceId]['custom_data']['device_type_description_en'] = JSON.parse(node.mainComponent.description).en;
+                    config[zoneId].items[deviceId]['custom_data']['device_type_description_ru'] = JSON.parse(node.mainComponent.description).ru;
                   } else {
                     config[zoneId].items[deviceId]['custom_data']['device_type_description_en'] = '';
                     config[zoneId].items[deviceId]['custom_data']['device_type_description_ru'] = '';
@@ -568,23 +717,26 @@ if (figma.command === 'export') {
   activateUtilitiesUi(false);
 
   generateConfig(figma.currentPage.selection)
-  .then(response => generateSettings(response))
-  .then(
-    () => {
-      figma.ui.postMessage({
-        command: 'export',
-        data: {
-          filename: 'plan_assets.zip',
+    .then(response => generateSVG(selection))
+    .then(response => exportSVG(response))
+    .then(response => generateSettings(response))
+    .then(
+      () => {
+        figma.ui.postMessage({
+          command: 'export',
           data: {
-            "configuration": JSON.stringify(config),
-            "settings": JSON.stringify(settings, null, 2)
-          }
-        },
+            filename: 'plan_assets.zip',
+            data: {
+              "configuration": JSON.stringify(config),
+              "settings": JSON.stringify(settings, null, 2),
+              "svg": svg
+            }
+          },
 
-      })
-    }
-  )
-  .catch(error => console.log(error));
+        })
+      }
+    )
+    .catch(error => console.log(error));
 
 }
 
