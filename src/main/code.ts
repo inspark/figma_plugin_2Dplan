@@ -27,7 +27,6 @@ function figmaRGBToWebRGB(color): any {
 function getVectorNodePath(zoneNode: GroupNode) {
   if ( zoneNode ) {
     for (const node of zoneNode.children) {
-
       if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' ) && node.visible === true) {
 
         // Duplicate node inside the same Group
@@ -41,9 +40,8 @@ function getVectorNodePath(zoneNode: GroupNode) {
 
         if ( flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
           const svg_path = flattenedNode.vectorPaths;
-          svg_path[0].x = flattenedNode.x;
-          svg_path[0].y = flattenedNode.y;
           flattenedNode.remove();
+
           return svg_path
         } else {
           console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.')
@@ -51,7 +49,6 @@ function getVectorNodePath(zoneNode: GroupNode) {
         return
       } else {
         console.log('Не найдено формы для зоны.');
-        return
       }
     }
   }
@@ -64,6 +61,19 @@ function generateConfig(selection: any) {
         let frameWidth = selection[0].width;
         let frameHeight = selection[0].height;
         let zoneCount = 0;
+
+        (async () => {
+          // Create a triangle using the VectorPath API
+          const vector = figma.createVector()
+          vector.vectorPaths = [{
+            windingRule: "EVENODD",
+            data: "M 0 100 L 100 100 L 50 0 Z",
+          }]
+
+          // Export the vector to SVG
+          const svg = await selection[0].exportAsync({ format: 'SVG_STRING' })
+          console.log(svg);
+        })()
 
         for (const groupName of Object.keys(selection[0].children)) {
           if ( selection[0].children[groupName].type === "GROUP" && selection[0].children[groupName].visible === true ) {
