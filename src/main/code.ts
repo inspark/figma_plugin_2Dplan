@@ -75,83 +75,67 @@ function exportNode(format) {
 }
 
 function generateSVG(selection: any) {
-  console.log(selection);
-  return new Promise(function(resolve, reject) {
-    if (selection.length === 1) {
-      if (selection[0].type === 'FRAME') {
-        let frameWidth = selection[0].width;
-        let frameHeight = selection[0].height;
-        let zoneCount = 0;
+  if (selection.length === 1) {
+    if (selection[0].type === 'FRAME') {
 
-        // Duplicate plan node to root
+      // Duplicate plan node to root
+      const planClone = selection[0].clone();
 
-        // Create parent plan node
-        const planClone = selection[0].clone();
+      // Move
+      planClone.x = selection[0].x + selection[0].width * 2;
+      planClone.y = selection[0].y;
 
-        // Move
-        planClone.x = selection[0].x + selection[0].width * 2;
-        planClone.y = selection[0].y;
+      // Rename
+      planClone.name = '_' + selection[0].name;
+      let imageNode;
 
-        // Rename
-        planClone.name = '_' + selection[0].name;
-        let imageNode;
+      for (const groupName of Object.keys(planClone.children)) {
+        if (planClone.children[groupName] && planClone.children[groupName].type === "GROUP" && planClone.children[groupName].visible === true) {
+          const zone = planClone.children[groupName];
+          for (const node of zone.children) {
+            if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') && node.visible === true) {
 
-        for (const groupName of Object.keys(planClone.children)) {
-          if (planClone.children[groupName] && planClone.children[groupName].type === "GROUP" && planClone.children[groupName].visible === true) {
-            const zone = planClone.children[groupName];
-            for (const node of zone.children) {
-              if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') && node.visible === true) {
+              // Flatten node to Vector, check that path is closed
+              const flattenedNode = figma.flatten([node], zone);
 
-                // Flatten node to Vector, check that path is closed
-                const flattenedNode = figma.flatten([node], zone);
-
-                if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
-                  flattenedNode.name = zone.id;
-                } else {
-                  console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
-                  flattenedNode.remove();
-                }
+              if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
+                flattenedNode.name = zone.id;
               } else {
-                node.remove();
+                console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
+                flattenedNode.remove();
               }
+            } else {
+              node.remove();
             }
-          } else {
-            imageNode = planClone.children[groupName];
           }
+        } else {
+          imageNode = planClone.children[groupName];
         }
-
-        imageNode.remove();
-
-
-        // (async () => {
-        //
-        //   // Export the vector to SVG
-        //   const _svg = await selection[0].exportAsync({ format: 'SVG_STRING' });
-        //   svg = _svg;
-        // })()
-
-
-
-        resolve(planClone);
-
-      } else {
-        reject(Error('Selection is not a frame. Please select one frame.'));
-        figma.notify('Selection is not a frame. Please select one frame.');
-        figma.closePlugin();
       }
+
+      imageNode.remove();
+
+      return planClone
+
     } else {
-      reject(Error('PPlease select only one frame to run plugin.'));
-      figma.notify('Please select only one frame to run plugin.');
+      reject(Error('Selection is not a frame. Please select one frame.'));
+      figma.notify('Selection is not a frame. Please select one frame.');
       figma.closePlugin();
     }
-  });
+  } else {
+    reject(Error('Please select only one frame to run plugin.'));
+    figma.notify('Please select only one frame to run plugin.');
+    figma.closePlugin();
+  }
 }
 
 async function exportSVG(node) {
 
+  console.log('exportSVG run');
   // Export the vector to SVG
-  const _svg = await node.exportAsync({ format: 'SVG_STRING' });
-  return _svg;
+  svg = await node.exportAsync({ format: 'SVG_STRING' });
+  node.remove();
+  return svg
 }
 
 function generateConfig(selection: any) {
@@ -160,47 +144,6 @@ function generateConfig(selection: any) {
       if (selection[0].type === 'FRAME') {
         let frameWidth = selection[0].width;
         let frameHeight = selection[0].height;
-        // let zoneCount = 0;
-        //
-        // // Duplicate plan node to root
-        //
-        // // Create parent plan node
-        // const planClone = selection[0].clone();
-        //
-        // // Move
-        // planClone.x = selection[0].x + selection[0].width * 2;
-        // planClone.y = selection[0].y;
-        //
-        // // Rename
-        // planClone.name = '_' + selection[0].name;
-        // let imageNode;
-        //
-        // for (const groupName of Object.keys(planClone.children)) {
-        //   if ( planClone.children[groupName] && planClone.children[groupName].type === "GROUP" && planClone.children[groupName].visible === true ) {
-        //     const zone = planClone.children[groupName];
-        //     for (const node of zone.children) {
-        //       if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION' ) && node.visible === true) {
-        //
-        //         // Flatten node to Vector, check that path is closed
-        //         const flattenedNode = figma.flatten([node], zone);
-        //
-        //         if ( flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
-        //           flattenedNode.name = zone.id;
-        //         } else {
-        //           console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
-        //           flattenedNode.remove();
-        //         }
-        //       } else {
-        //         node.remove();
-        //       }
-        //     }
-        //   } else {
-        //     imageNode = planClone.children[groupName];
-        //   }
-        // }
-        //
-        // imageNode.remove();
-
 
         for (const groupName of Object.keys(selection[0].children)) {
           if ( selection[0].children[groupName].type === "GROUP" && selection[0].children[groupName].visible === true ) {
@@ -224,28 +167,6 @@ function generateConfig(selection: any) {
             let deviceCount = 0;
 
             for (const node of zone.children) {
-              if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' ) && node.visible === true) {
-
-                // Duplicate node inside the same Group
-                // const clonedNode = node.clone();
-                // console.log('planClone', planClone.name);
-                // planClone.insertChild(0, clonedNode);
-                // clonedNode.x = node.x;
-                // clonedNode.y = node.y;
-
-                // Flatten node to Vector, check that path is closed
-                // const flattenedNode = figma.flatten([clonedNode], zone);
-
-                // if ( flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
-                //   const svg_path = flattenedNode.vectorPaths;
-                //   flattenedNode.remove();
-                //
-                //   return svg_path
-                // } else {
-                //   console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.')
-                // }
-                // return
-              }
 
               if (node.type === "INSTANCE" && node.visible === true) {
                 deviceCount++;
@@ -717,9 +638,9 @@ if (figma.command === 'export') {
   activateUtilitiesUi(false);
 
   generateConfig(figma.currentPage.selection)
-    .then(response => generateSVG(selection))
-    .then(response => exportSVG(response))
     .then(response => generateSettings(response))
+    .then(response => generateSVG(figma.currentPage.selection))
+    .then(response => exportSVG(response))
     .then(
       () => {
         figma.ui.postMessage({

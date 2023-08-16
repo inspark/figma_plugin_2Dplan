@@ -52,12 +52,14 @@
     if (message.command === "export") {
       return new Promise(resolve => {
 
-        var config = message.data.data.configuration;
-        var settings = message.data.data.settings;
+        const config = message.data.data.configuration;
+        const settings = message.data.data.settings;
+        const svg = message.data.data.svg;
 
         let zip = new JSZip();
         zip.file('plan_configuration.json', config, {base64: false});
         zip.file('plan_settings.txt', settings, {base64: false});
+        zip.file('plan_svg.svg', svg, {base64: false});
 
 
         zip.generateAsync({ type: 'blob' })
