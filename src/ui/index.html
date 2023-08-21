@@ -45,11 +45,13 @@
     }
 
     return settings
-  };
+  }
 
   onmessage = async (event) => {
     let message = event.data.pluginMessage;
+
     if (message.command === "export") {
+      console.log('html export run');
       return new Promise(resolve => {
 
         const config = message.data.data.configuration;
@@ -74,12 +76,14 @@
         });
       })
       .then(() => {
+        console.log('post close to ts');
         parent.postMessage({
-        pluginMessage: {
-          command: 'closePlugin',
-          notification: '🎉 Plan configuration export succesfull!'
-        }
-      }, '*')
+          pluginMessage: {
+            command: 'closePlugin',
+            notification: '🎉 Plan configuration export succesfull!'
+          }
+        }, '*');
+        console.log('after post close');
       });
     }
 
@@ -139,6 +143,29 @@
           command: 'closePlugin'
         }
       }, '*')
+    }
+
+    if (message.command === undefined) {
+      console.log('message: ', message);
+
+      let zonesPaths = {};
+      const parser = new DOMParser();
+      const svgDomNode = parser.parseFromString(message, "image/svg+xml");
+      const svgPlanGroupCollection= svgDomNode.getElementsByTagName('g');
+      for ( let group of svgPlanGroupCollection ) {
+        if ( group.id.startsWith('zone_', 0) ) {
+          const zonePathEl = group.getElementsByTagName('path')[0];
+          zonesPaths[group.id] = zonePathEl.getAttribute('d');
+        }
+      }
+      console.log('zonePathsыы: ', zonesPaths);
+      parent.postMessage({
+        pluginMessage: {
+          command: 'setZonePaths',
+          data: zonesPaths
+        }
+      }, '*')
+
     }
   }
 

@@ -25,55 +25,6 @@ function figmaRGBToWebRGB(color): any {
   return rgb
 }
 
-//
-function getVectorNodePath(zoneNode: GroupNode) {
-  if ( zoneNode ) {
-    for (const node of zoneNode.children) {
-      if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' ) && node.visible === true) {
-
-
-
-
-        // Duplicate node inside the same Group
-        const clonedNode = node.clone();
-        zoneNode.insertChild(0, clonedNode);
-        clonedNode.x = node.x;
-        clonedNode.y = node.y;
-
-        // Flatten node to Vector, check that path is closed
-        const flattenedNode = figma.flatten([clonedNode], zoneNode);
-
-        if ( flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
-          const svg_path = flattenedNode.vectorPaths;
-          flattenedNode.remove();
-
-          return svg_path
-        } else {
-          console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.')
-        }
-        return
-      } else {
-        console.log('Не найдено формы для зоны.');
-      }
-    }
-  }
-}
-
-function exportNode(format) {
-  (async () => {
-    // Create a triangle using the VectorPath API
-    const vector = figma.createVector()
-    vector.vectorPaths = [{
-      windingRule: "EVENODD",
-      data: "M 0 100 L 100 100 L 50 0 Z",
-    }]
-
-    // Export the vector to SVG
-    const svg = await selection[0].exportAsync({ format: 'SVG_STRING' })
-    console.log(svg);
-  })()
-}
-
 function generateSVG(selection: any) {
   if (selection.length === 1) {
     if (selection[0].type === 'FRAME') {
@@ -92,6 +43,9 @@ function generateSVG(selection: any) {
       for (const groupName of Object.keys(planClone.children)) {
         if (planClone.children[groupName] && planClone.children[groupName].type === "GROUP" && planClone.children[groupName].visible === true) {
           const zone = planClone.children[groupName];
+
+          // Подставляем id ноды из оригинального фрейма
+          zone.name = 'zone_' + selection[0].children[groupName].id;
           for (const node of zone.children) {
             if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') && node.visible === true) {
 
@@ -99,15 +53,20 @@ function generateSVG(selection: any) {
               const flattenedNode = figma.flatten([node], zone);
 
               if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
-                flattenedNode.name = zone.id;
+                flattenedNode.name = selection[0].children[groupName].id;
               } else {
                 console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
                 flattenedNode.remove();
               }
+            } else if ( node.type === 'TEXT' && node.visible === true) {
+
             } else {
               node.remove();
             }
           }
+
+          // generateZoneNames(zone).then(response => {if(zone) {zone.insertChild(1, response)}});
+
         } else {
           imageNode = planClone.children[groupName];
         }
@@ -118,24 +77,57 @@ function generateSVG(selection: any) {
       return planClone
 
     } else {
-      reject(Error('Selection is not a frame. Please select one frame.'));
       figma.notify('Selection is not a frame. Please select one frame.');
       figma.closePlugin();
     }
   } else {
-    reject(Error('Please select only one frame to run plugin.'));
     figma.notify('Please select only one frame to run plugin.');
     figma.closePlugin();
   }
 }
 
-async function exportSVG(node) {
-
-  console.log('exportSVG run');
+async function exportSVG(node, format) {
   // Export the vector to SVG
-  svg = await node.exportAsync({ format: 'SVG_STRING' });
+  svg = await node.exportAsync({ format: format, svgIdAttribute: true });
   node.remove();
   return svg
+}
+
+function zonePathExport(svg) {
+  return new Promise(function(resolve, reject) {
+    figma.ui.postMessage(svg);
+    figma.ui.onmessage = (message) => {
+
+      if (message.command === 'setZonePaths') {
+        for ( const zone of Object.keys(message.data) ) {
+          config[zone].custom_data.path = message.data[zone];
+        }
+
+        resolve(message.data)
+      }
+    }
+  })
+}
+
+async function generateZoneNames(zone){
+
+
+  // ADD ZONE NAME
+  const zoneName = figma.createText();
+
+  // Load the font in the text node before setting the characters
+  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
+  zoneName.characters = 'Hello world!';
+
+  // Move to (50, 50)
+  zoneName.x = zone.x + zone.width / 2 - zoneName.width / 2;
+  console.log('zoneName.width: ', zoneName.width);
+  zoneName.y = zone.y + zone.height / 2 - zoneName.height / 2;
+
+  // Set bigger font size and red color
+  zoneName.fontSize = 18;
+  zoneName.fills = [{ type: 'SOLID', color: { r: 1, g: 0, b: 0 } }];
+  return zoneName
 }
 
 function generateConfig(selection: any) {
@@ -161,7 +153,6 @@ function generateConfig(selection: any) {
             config[zoneId]['custom_data'] = {
               'title': zoneName,
               'id': zone.id,
-              // 'vector_paths': getVectorNodePath(selection[0].children[groupName])
             }
 
             let deviceCount = 0;
@@ -638,11 +629,13 @@ if (figma.command === 'export') {
   activateUtilitiesUi(false);
 
   generateConfig(figma.currentPage.selection)
-    .then(response => generateSettings(response))
-    .then(response => generateSVG(figma.currentPage.selection))
-    .then(response => exportSVG(response))
+    .then(() => generateSVG(figma.currentPage.selection))
+    .then(response => exportSVG(response, 'SVG_STRING'))
+    .then(response => zonePathExport(response))
+    .then(() => generateSettings(config))
     .then(
       () => {
+        console.log('End step generating config: ', config);
         figma.ui.postMessage({
           command: 'export',
           data: {
@@ -654,7 +647,8 @@ if (figma.command === 'export') {
             }
           },
 
-        })
+        });
+
       }
     )
     .catch(error => console.log(error));
@@ -682,6 +676,7 @@ if (figma.command === 'help') {
 // CLOSE PLUGIN
 figma.ui.onmessage = async (message) => {
   if (message.command === 'closePlugin') {
+    console.log('closePlugin');
     // show notification if send
     if (message.notification !== undefined && message.notification !== '') {
       figma.notify(message.notification)
