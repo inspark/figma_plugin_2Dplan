@@ -96,16 +96,15 @@ async function exportSVG(node, format) {
 function zonePathExport(svg) {
   return new Promise(function(resolve, reject) {
     figma.ui.postMessage(svg);
-    figma.ui.onmessage = (message) => {
-
+    // let pathData;
+    figma.ui.on('message', message => {
       if (message.command === 'setZonePaths') {
         for ( const zone of Object.keys(message.data) ) {
           config[zone].custom_data.path = message.data[zone];
         }
-
         resolve(message.data)
       }
-    }
+    })
   })
 }
 

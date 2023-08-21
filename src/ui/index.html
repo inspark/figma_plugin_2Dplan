@@ -83,8 +83,9 @@
             notification: '🎉 Plan configuration export succesfull!'
           }
         }, '*');
+
         console.log('after post close');
-      });
+      }).catch(error => console.log(error));;
     }
 
     if (message.command === "configToSettings") {
