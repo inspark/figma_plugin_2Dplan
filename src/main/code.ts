@@ -25,7 +25,7 @@ function figmaRGBToWebRGB(color): any {
   return rgb
 }
 
-function generateSVG(selection: any) {
+async function generateSVG(selection: any) {
   if (selection.length === 1) {
     if (selection[0].type === 'FRAME') {
 
@@ -56,23 +56,64 @@ function generateSVG(selection: any) {
                 flattenedNode.name = selection[0].children[groupName].id;
               } else {
                 console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
-                flattenedNode.remove();
+                flattenedNode.visible = false;
               }
             } else if ( node.type === 'TEXT' && node.visible === true) {
+              const zoneTitle = node.name;
+              config[zone.name].custom_data.title = node.characters;
+              config[zone.name].title = node.characters;
+              config[zone.name].custom_data.text = {};
+              config[zone.name].custom_data.text.x = node.x;
+              config[zone.name].custom_data.text.y = node.y;
+              config[zone.name].custom_data.text.fontSize = node.fontSize;
+              config[zone.name].custom_data.text.fills = node.fills;
 
+              // node.visible = false;
+              node.remove();
             } else {
+              // node.visible = false;
               node.remove();
             }
           }
 
-          // generateZoneNames(zone).then(response => {if(zone) {zone.insertChild(1, response)}});
+          // Если в зоне нет текстового слоя, сгенерить такой из названия зоны (группы)
+          if ( !(config[zone.name].custom_data.hasOwnProperty('text')) ) {
+            const font = {family: 'Open Sans', style: 'Regular'};
 
+            try {
+              // Load the font in the text node before setting the characters
+              await fontLoadingFunction(font).then(() => {
+                // generateZoneNames(zone)
+                let zoneTextNode = figma.createText();
+                zoneTextNode.fontName = font;
+                zoneTextNode.fontSize = 11;
+                zoneTextNode.characters = config[zone.name].custom_data.title;
+                zoneTextNode.x = Number(zone.x) + (Number(zone.width) / 2) - (Number(zoneTextNode.width) / 2);
+                zoneTextNode.y = Number(zone.y) + (Number(zone.height) / 2) + (Number(zoneTextNode.height) / 2);
+                zoneTextNode.fills = [{ type: 'SOLID', color: { r: 1, g: 0, b: 0 } }];
+
+                return zoneTextNode
+
+              }).then(zoneTextNode => {
+                config[zone.name].custom_data.text = {};
+                config[zone.name].custom_data.text.x = zoneTextNode.x;
+                config[zone.name].custom_data.text.y = zoneTextNode.y;
+                config[zone.name].custom_data.text.fontSize = zoneTextNode.fontSize;
+                config[zone.name].custom_data.text.fills = zoneTextNode.fills;
+              });
+
+            } catch(err) {
+              console.error(`Error: ${err}`);
+            }
+          }
         } else {
           imageNode = planClone.children[groupName];
         }
       }
 
-      imageNode.remove();
+      if ( imageNode ) {
+        imageNode.remove();
+      }
 
       return planClone
 
@@ -108,24 +149,33 @@ function zonePathExport(svg) {
   })
 }
 
-async function generateZoneNames(zone){
+const fontLoadingFunction = async (font) => {
+  await figma.loadFontAsync(font)
+}
 
-
+function generateZoneNames(zone){
   // ADD ZONE NAME
   const zoneName = figma.createText();
 
   // Load the font in the text node before setting the characters
-  await figma.loadFontAsync({ family: "Inter", style: "Regular" });
-  zoneName.characters = 'Hello world!';
+  // await new Promise((resolve, reject) => figma.loadFontAsync({ family: "Inter", style: "Regular" }));
+  // zoneName.characters = zone.name;
 
   // Move to (50, 50)
   zoneName.x = zone.x + zone.width / 2 - zoneName.width / 2;
-  console.log('zoneName.width: ', zoneName.width);
   zoneName.y = zone.y + zone.height / 2 - zoneName.height / 2;
 
-  // Set bigger font size and red color
-  zoneName.fontSize = 18;
+  zoneName.fontName = {
+    family: 'Inter',
+    style: 'Bold'
+  };
+  zoneName.fontSize = 14;
   zoneName.fills = [{ type: 'SOLID', color: { r: 1, g: 0, b: 0 } }];
+  config[zone.name].custom_data.text = {};
+  config[zone.name].custom_data.text.x = zoneName.x;
+  config[zone.name].custom_data.text.y = zoneName.y;
+  config[zone.name].custom_data.text.fontSize = zoneName.fontSize;
+  config[zone.name].custom_data.text.fills = zoneName.fills;
   return zoneName
 }
 
@@ -634,7 +684,6 @@ if (figma.command === 'export') {
     .then(() => generateSettings(config))
     .then(
       () => {
-        console.log('End step generating config: ', config);
         figma.ui.postMessage({
           command: 'export',
           data: {
@@ -675,13 +724,11 @@ if (figma.command === 'help') {
 // CLOSE PLUGIN
 figma.ui.onmessage = async (message) => {
   if (message.command === 'closePlugin') {
-    console.log('closePlugin');
     // show notification if send
     if (message.notification !== undefined && message.notification !== '') {
       figma.notify(message.notification)
     }
     // close plugin
-    // console.log('Figma Plugin does not close')
     figma.closePlugin()
   }
 }

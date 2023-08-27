@@ -24,7 +24,6 @@
     let settings = {};
     if (config){
       settings = JSON.parse(JSON.stringify(config));
-      console.log('settins in generateSettings: ', settings);
 
       for (const zone of Object.keys(settings)) {
         if (settings[zone].hasOwnProperty('items')) {
@@ -51,7 +50,6 @@
     let message = event.data.pluginMessage;
 
     if (message.command === "export") {
-      console.log('html export run');
       return new Promise(resolve => {
 
         const config = message.data.data.configuration;
@@ -76,29 +74,26 @@
         });
       })
       .then(() => {
-        console.log('post close to ts');
         parent.postMessage({
           pluginMessage: {
             command: 'closePlugin',
             notification: '🎉 Plan configuration export succesfull!'
           }
         }, '*');
-
-        console.log('after post close');
-      }).catch(error => console.log(error));;
+      }).catch(error => console.log(error));
     }
 
     if (message.command === "configToSettings") {
       let config = {};
       return new Promise(resolve => {
         function onChange(event) {
-          var reader = new FileReader();
+          const reader = new FileReader();
           reader.onload = onReaderLoad;
           reader.readAsText(event.target.files[0]);
         }
 
         function onReaderLoad(event){
-          let obj = JSON.parse(event.target.result);
+          const obj = JSON.parse(event.target.result);
           resolve(obj);
         }
 
@@ -109,7 +104,7 @@
         const previewEl = document.getElementById('preview');
 
         // add button that copy Settings
-        var btnCopySettinsEl = document.createElement('button');
+        let btnCopySettinsEl = document.createElement('button');
         btnCopySettinsEl.id = 'copySettingsBtn';
         btnCopySettinsEl.innerText = 'Copy Settings';
         btnCopySettinsEl.style.margin = '16px 0 8px 0';
@@ -147,7 +142,6 @@
     }
 
     if (message.command === undefined) {
-      console.log('message: ', message);
 
       let zonesPaths = {};
       const parser = new DOMParser();
@@ -159,7 +153,6 @@
           zonesPaths[group.id] = zonePathEl.getAttribute('d');
         }
       }
-      console.log('zonePathsыы: ', zonesPaths);
       parent.postMessage({
         pluginMessage: {
           command: 'setZonePaths',
