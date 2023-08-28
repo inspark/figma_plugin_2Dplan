@@ -46,6 +46,7 @@ async function generateSVG(selection: any) {
 
           // Подставляем id ноды из оригинального фрейма
           zone.name = 'zone_' + selection[0].children[groupName].id;
+
           for (const node of zone.children) {
             if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') && node.visible === true) {
 
@@ -54,6 +55,9 @@ async function generateSVG(selection: any) {
 
               if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
                 flattenedNode.name = selection[0].children[groupName].id;
+                config[zone.name].custom_data.fill = flattenedNode.fills[0];
+                config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
+                config[zone.name].custom_data.strokeWidth = flattenedNode.strokeWeight;
               } else {
                 console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
                 flattenedNode.visible = false;
@@ -66,7 +70,9 @@ async function generateSVG(selection: any) {
               config[zone.name].custom_data.text.x = node.x;
               config[zone.name].custom_data.text.y = node.y;
               config[zone.name].custom_data.text.fontSize = node.fontSize;
-              config[zone.name].custom_data.text.fills = node.fills;
+              config[zone.name].custom_data.text.fill = node.fills[0];
+              config[zone.name].custom_data.text.stroke = node.strokes[0];
+              config[zone.name].custom_data.text.strokeWidth = node.strokeWeight;
 
               // node.visible = false;
               node.remove();
@@ -99,7 +105,9 @@ async function generateSVG(selection: any) {
                 config[zone.name].custom_data.text.x = zoneTextNode.x;
                 config[zone.name].custom_data.text.y = zoneTextNode.y;
                 config[zone.name].custom_data.text.fontSize = zoneTextNode.fontSize;
-                config[zone.name].custom_data.text.fills = zoneTextNode.fills;
+                config[zone.name].custom_data.text.fill = zoneTextNode.fills[0];
+                config[zone.name].custom_data.text.stroke = zoneTextNode.strokes[0];
+                config[zone.name].custom_data.text.strokeWidth = zoneTextNode.strokeWeight;
               });
 
             } catch(err) {
