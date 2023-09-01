@@ -464,8 +464,8 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId]['custom_data'] = {
                     'title': deviceName,
                     'template': 'fancoil3relayTemplate',
-                    'top': (device.y / frameHeight) * 100,
-                    'left': (device.x / frameWidth) * 100,
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
                     'placement': 'auto'
                   }
 
