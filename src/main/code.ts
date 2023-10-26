@@ -48,7 +48,10 @@ async function generateSVG(selection: any) {
           zone.name = 'zone_' + selection[0].children[groupName].id;
 
           for (const node of zone.children) {
-            if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' || node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') && node.visible === true) {
+            if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' ||
+              node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') &&
+              node.visible === true) {
+
 
               // Flatten node to Vector, check that path is closed
               const flattenedNode = figma.flatten([node], zone);
@@ -63,7 +66,7 @@ async function generateSVG(selection: any) {
                 flattenedNode.visible = false;
               }
             } else if ( node.type === 'TEXT' && node.visible === true) {
-              const zoneTitle = node.name;
+              // const zoneTitle = node.name;
               config[zone.name].custom_data.title = node.characters;
               config[zone.name].title = node.characters;
               config[zone.name].custom_data.text = {};
@@ -75,10 +78,9 @@ async function generateSVG(selection: any) {
               config[zone.name].custom_data.text.strokeWidth = node.strokeWeight;
 
               // node.visible = false;
-              node.remove();
+              node.opacity = 0;
             } else {
-              // node.visible = false;
-              node.remove();
+              node.opacity = 0;
             }
           }
 
@@ -115,11 +117,13 @@ async function generateSVG(selection: any) {
             }
           }
         } else {
+          console.log('image node');
           imageNode = planClone.children[groupName];
         }
       }
 
       if ( imageNode ) {
+        console.log('if imageNode');
         imageNode.remove();
       }
 
@@ -136,6 +140,7 @@ async function generateSVG(selection: any) {
 }
 
 async function exportSVG(node, format) {
+
   // Export the vector to SVG
   svg = await node.exportAsync({ format: format, svgIdAttribute: true });
   node.remove();
