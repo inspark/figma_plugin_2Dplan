@@ -3,6 +3,7 @@ let config = {};
 let settings = {};
 let svg;
 const selection: SceneNode = figma.currentPage.selection[0];
+let hasZone = false;
 
 function isJsonString(str) {
   try {
@@ -52,6 +53,8 @@ async function generateSVG(selection: any) {
               node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') &&
               node.visible === true) {
 
+              hasZone = true;
+
 
               // Flatten node to Vector, check that path is closed
               const flattenedNode = figma.flatten([node], zone);
@@ -78,9 +81,10 @@ async function generateSVG(selection: any) {
               config[zone.name].custom_data.text.strokeWidth = node.strokeWeight;
 
               // node.visible = false;
-              node.opacity = 0;
+              node.visible = false;
             } else {
-              node.opacity = 0;
+              // node.opacity = 0;
+              node.visible = false;
             }
           }
 
@@ -117,13 +121,11 @@ async function generateSVG(selection: any) {
             }
           }
         } else {
-          console.log('image node');
           imageNode = planClone.children[groupName];
         }
       }
 
       if ( imageNode ) {
-        console.log('if imageNode');
         imageNode.remove();
       }
 
@@ -142,9 +144,15 @@ async function generateSVG(selection: any) {
 async function exportSVG(node, format) {
 
   // Export the vector to SVG
-  svg = await node.exportAsync({ format: format, svgIdAttribute: true });
-  node.remove();
-  return svg
+  if ( hasZone ) {
+    svg = await node.exportAsync({ format: format, svgIdAttribute: true });
+    node.remove();
+    return svg
+  } else {
+    node.remove();
+    return {}
+  }
+
 }
 
 function zonePathExport(svg) {
@@ -439,7 +447,7 @@ function generateConfig(selection: any) {
                     'top': (node.y / frameHeight) * 100,
                     'left': (node.x / frameWidth) * 100,
                     'placement': 'auto',
-                    'remote_control': node.variantProperties ? node.variantProperties['Remote control'] : device.componentProperties,
+                    'remote_control': node.variantProperties ? node.variantProperties['Remote control'] : node.componentProperties['Remote control'].value,
                     'cooling': node.variantProperties ? node.variantProperties['Cooling'] : '',
                     'heating': node.variantProperties ? node.variantProperties['Heating'] : ''
                   }
