@@ -53,13 +53,14 @@ async function generateSVG(selection: any) {
               node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') &&
               node.visible === true) {
 
-              hasZone = true;
+
 
 
               // Flatten node to Vector, check that path is closed
               const flattenedNode = figma.flatten([node], zone);
 
               if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
+                hasZone = true;
                 flattenedNode.name = selection[0].children[groupName].id;
                 config[zone.name].custom_data.fill = flattenedNode.fills[0];
                 config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
