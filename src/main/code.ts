@@ -666,6 +666,19 @@ function generateConfig(selection: any) {
                     }
                   }
                 }
+
+                if ( deviceInstanceName === 'object' ) {
+                  config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
+                  config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
+                  config[zoneId].items[deviceId]['custom_data'] = {
+                    'title': deviceName,
+                    'template': 'objectTemplate',
+                    'top': (node.y / frameHeight) * 100,
+                    'left': (node.x / frameWidth) * 100,
+                    'placement': 'auto',
+                    'url': node.reactions[0]?.action?.type ==='URL' ? node.reactions[0]?.action?.url : ''
+                  }
+                }
               }
             }
           }
