@@ -35,6 +35,8 @@ Next you will need to run a terminal command to install this project's dependenc
 
 If you're using VS Code, you can `File → Open Workspace` and choose the folder where you cloned the project to. Alternatively, in OSX, you can just drag the folder from Finder onto the VS Code icon in your dock. From here you will need to open the terminal, `Terminal → New Terminal`.
 
+Use node 14.21.3.
+
 Now you can enter the command to install it:
 ```bash 
 npm install
