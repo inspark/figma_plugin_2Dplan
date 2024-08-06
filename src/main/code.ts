@@ -81,8 +81,8 @@ async function generateSVG(selection: any) {
               config[zone.name].custom_data.text.stroke = node.strokes[0];
               config[zone.name].custom_data.text.strokeWidth = node.strokeWeight;
 
-              // node.visible = false;
               node.visible = false;
+            } else if ( node.type === 'INSTANCE' && node.visible === true ) {
             } else {
               // node.opacity = 0;
               node.visible = false;
@@ -90,7 +90,7 @@ async function generateSVG(selection: any) {
           }
 
           // Если в зоне нет текстового слоя, сгенерить такой из названия зоны (группы)
-          if ( !(config[zone.name].custom_data.hasOwnProperty('text')) ) {
+          if ( !(config[zone.name].custom_data.hasOwnProperty('text')) && (config[zone.name].custom_data.hasOwnProperty('path')) ) {
             const font = {family: 'Open Sans', style: 'Regular'};
 
             try {
@@ -143,10 +143,9 @@ async function generateSVG(selection: any) {
 }
 
 async function exportSVG(node, format) {
-
   // Export the vector to SVG
   if ( hasZone ) {
-    svg = await node.exportAsync({ format: format, svgIdAttribute: true });
+    svg = await node.exportAsync({ format: format, svgIdAttribute: true, svgOutlineText: false });
     node.remove();
     return svg
   } else {
@@ -163,7 +162,14 @@ function zonePathExport(svg) {
     figma.ui.on('message', message => {
       if (message.command === 'setZonePaths') {
         for ( const zone of Object.keys(message.data) ) {
-          config[zone].custom_data.path = message.data[zone];
+          config[zone].custom_data.path = message.data[zone].path;
+
+          if ( message.data[zone].devices ) {
+            for ( const device of Object.keys(message.data[zone].devices) ) {
+              const configUpdated = Object.assign(config[zone].items[device].custom_data, message.data[zone].devices[device]);
+
+            }
+          }
         }
         resolve(message.data)
       }
@@ -361,6 +367,72 @@ function generateConfig(selection: any) {
                   config[zoneId].items[deviceId].items = {
                     'mnemoscheme_switch': {
                       'title': 'Mnemoscheme switch state'
+                    }
+                  }
+                }
+
+                if ( deviceInstanceName === 'rectangle' ) {
+                  config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
+                  config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
+                  config[zoneId].items[deviceId]['custom_data'] = {
+                    'title': node.name,
+                    'template': 'rectangleTemplate',
+                    'rotation_angle': node.rotation,
+                    'placement': 'auto'
+                  }
+
+                  const rectEl = node.findOne(node => {
+                    return node.type === "RECTANGLE"
+                  });
+
+                  // Flatten node to Vector, check that path is closed
+                  // const flattenedNode = figma.flatten([rectEl]);
+                  // const flattenedNode = subnode;
+
+                  if ( rectEl ) {
+                    node.name = 'rectangle_' + node.id;
+                    rectEl.name = selection[0].children[groupName].id;
+                    config[zoneId].items[deviceId]['custom_data'].fill = rectEl.fills[0];
+                    config[zoneId].items[deviceId]['custom_data'].stroke = rectEl.strokes[0];
+                    config[zoneId].items[deviceId]['custom_data'].strokeWidth = rectEl.strokeWeight;
+                  } else {
+                    console.log('Контур фигуры не замкнут, экспорт формы зоны не произведен.');
+                    // flattenedNode.visible = false;
+                  }
+
+                  config[zoneId].items[deviceId].items = {
+                    'rectangle': {
+                      'title': 'Fill state'
+                    }
+                  }
+                }
+
+                if ( deviceInstanceName === 'text' ) {
+                  config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
+                  config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
+                  config[zoneId].items[deviceId]['custom_data'] = {
+                    'title': node.name,
+                    'template': 'textTemplate',
+                    'rotation_angle': node.rotation,
+                    'placement': 'auto'
+                  }
+
+                  const textEl = node.findOne(node => {
+                    return node.type === "TEXT"
+                  });
+
+                  if ( textEl ) {
+                    node.name = 'text_' + node.id;
+                    textEl.name = selection[0].children[groupName].id;
+                    config[zoneId].items[deviceId]['custom_data'].fill = textEl.fills[0];
+                    config[zoneId].items[deviceId]['custom_data'].stroke = textEl.strokes[0];
+                    config[zoneId].items[deviceId]['custom_data'].strokeWidth = textEl.strokeWeight;
+                    config[zoneId].items[deviceId]['custom_data'].characters = textEl.characters;
+                  }
+
+                  config[zoneId].items[deviceId].items = {
+                    'text': {
+                      'title': 'Text'
                     }
                   }
                 }

@@ -150,7 +150,43 @@
       for ( let group of svgPlanGroupCollection ) {
         if ( group.id.startsWith('zone_', 0) ) {
           const zonePathEl = group.getElementsByTagName('path')[0];
-          zonesPaths[group.id] = zonePathEl.getAttribute('d');
+          // zonesPaths[group.id] = zonePathEl.getAttribute('d');
+
+          zonesPaths[group.id]= {};
+          zonesPaths[group.id].path = zonePathEl.getAttribute('d');
+          zonesPaths[group.id].id = zonePathEl.id;
+          zonesPaths[group.id].devices = {};
+
+          for ( let device of group.children ) {
+            if ( device.id.startsWith('rectangle_', 0) ) {
+              const rectEl = device.getElementsByTagName('rect')[0];
+              if ( rectEl ) {
+                zonesPaths[group.id].devices[device.id] = {
+                  id: device.id,
+                  x: rectEl.getAttribute('x'),
+                  y: rectEl.getAttribute('y'),
+                  width: rectEl.getAttribute('width'),
+                  height: rectEl.getAttribute('height'),
+                  rx: rectEl.getAttribute('rx'),
+                  ry: rectEl.getAttribute('ry')
+                };
+              }
+            } else if ( device.id.startsWith('text_', 0) ) {
+              const textEl = device.getElementsByTagName('text')[0];
+              const tspanEl = device.getElementsByTagName('tspan')[0];
+              if ( textEl && tspanEl ) {
+                zonesPaths[group.id].devices[device.id] = {
+                  id: device.id,
+                  style: textEl.getAttribute('style'),
+                  'font-family': textEl.getAttribute('font-family'),
+                  'font-size': textEl.getAttribute('font-size'),
+                  'letter-spacing': textEl.getAttribute('letter-spacing'),
+                  x: tspanEl.getAttribute('x'),
+                  y: tspanEl.getAttribute('y')
+                };
+              }
+            }
+          }
         }
       }
       parent.postMessage({
