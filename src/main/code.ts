@@ -144,18 +144,13 @@ async function generateSVG(selection: any) {
 
 async function exportSVG(node, format) {
   // Export the vector to SVG
-  if ( hasZone ) {
-    svg = await node.exportAsync({ format: format, svgIdAttribute: true, svgOutlineText: false });
-    node.remove();
-    return svg
-  } else {
-    node.remove();
-    return {}
-  }
-
+  svg = await node.exportAsync({ format: format, svgIdAttribute: true, svgOutlineText: false });
+  node.remove();
+  return svg
 }
 
 function zonePathExport(svg) {
+
   return new Promise(function(resolve, reject) {
     figma.ui.postMessage(svg);
     // let pathData;

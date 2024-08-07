@@ -148,17 +148,20 @@
       const svgDomNode = parser.parseFromString(message, "image/svg+xml");
       const svgPlanGroupCollection= svgDomNode.getElementsByTagName('g');
       for ( let group of svgPlanGroupCollection ) {
+
         if ( group.id.startsWith('zone_', 0) ) {
           const zonePathEl = group.getElementsByTagName('path')[0];
-          // zonesPaths[group.id] = zonePathEl.getAttribute('d');
 
           zonesPaths[group.id]= {};
-          zonesPaths[group.id].path = zonePathEl.getAttribute('d');
-          zonesPaths[group.id].id = zonePathEl.id;
           zonesPaths[group.id].devices = {};
 
+          if ( zonePathEl ) {
+            zonesPaths[group.id].path = zonePathEl.getAttribute('d');
+            zonesPaths[group.id].id = zonePathEl.id;
+          }
+
           for ( let device of group.children ) {
-            if ( device.id.startsWith('rectangle_', 0) ) {
+            if (  device && device.id.startsWith('rectangle_', 0) ) {
               const rectEl = device.getElementsByTagName('rect')[0];
               if ( rectEl ) {
                 zonesPaths[group.id].devices[device.id] = {
@@ -171,7 +174,7 @@
                   ry: rectEl.getAttribute('ry')
                 };
               }
-            } else if ( device.id.startsWith('text_', 0) ) {
+            } else if ( device?.id.startsWith('text_', 0) ) {
               const textEl = device.getElementsByTagName('text')[0];
               const tspanEl = device.getElementsByTagName('tspan')[0];
               if ( textEl && tspanEl ) {
