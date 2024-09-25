@@ -8,6 +8,7 @@
     "figma"
   ],
   "menu": [
+    {"name": "Setup plan nodes", "command": "setup"},
     {"name": "Export Plan Assets", "command": "export"},
     {"name": "Configuration to Settings", "command": "configToSettings"},
     {"name": "Help", "command": "help"}
