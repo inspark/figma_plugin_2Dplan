@@ -15,6 +15,8 @@ let exportedData = {};
 
 const selection: SceneNode = figma.currentPage.selection[0];
 
+const lockerCellsQuantityDefault = 16;
+
 function isJsonString(str) {
   try {
       JSON.parse(str);
@@ -37,16 +39,12 @@ function figmaRGBToWebRGB(color): any {
 }
 
 async function preparePlanClone(selection: any) {
-
-  console.log('preparePlanClone');
   if (selection.length === 1) {
     if (selection[0].type === 'FRAME') {
 
       selection[0].setPluginData('componentName', 'rectangle');
       // Duplicate plan node to root
       const planClone = selection[0].clone();
-
-      console.log('planClone pluginData: ', planClone.getPluginData('componentName'));
 
       // Move
       planClone.x = selection[0].x + selection[0].width * 2;
@@ -95,17 +93,12 @@ async function preparePlanClone(selection: any) {
               node.visible = false;
             } else if ( node.type === 'INSTANCE' && ( node.mainComponent.name === 'text' || node.mainComponent.name === 'rectangle' ) && node.visible === true ) {
 
-              console.log('node.name: ', node.name);
-              // console.log('mainComponent.name: ', node.getMainComponentAsync());
 
               // const mainComponent = await node.getMainComponentAsync();
               // const mainComponentName = mainComponent?.name;
 
               node.name = node.getPluginData('id');
               // rectEl.name = selection[0].children[groupName].id;
-
-
-              console.log('selection[0].children[groupName].children.node.name: ', selection[0].children[groupName].findChild(n => n.name === node.name));
               // node.name = node.mainComponent?.name + '_' + selection[0].children[groupName];
             } else {
               // node.opacity = 0;
@@ -167,7 +160,6 @@ async function preparePlanClone(selection: any) {
 }
 
 async function generateSVG(node, format) {
-  console.log('generateSVG');
   // Export the vector to SVG
   svg = await node.exportAsync({ format: format, svgIdAttribute: true, svgOutlineText: false });
   node.remove();
@@ -175,32 +167,20 @@ async function generateSVG(node, format) {
 }
 
 function addSVGData(svg) {
-  console.log('addSVGData');
   return new Promise(function(resolve, reject) {
-    console.log('exportedData: ', exportedData);
     figma.ui.postMessage({svg, exportedData});
     // let pathData;
     figma.ui.on('message', message => {
       if (message.command === 'setSVGData') {
-        console.log('message.data: ', message.data);
         for ( const zone of Object.keys(message.data) ) {
-          // console.log('config: ', config);
-          // console.log('config[zone]: ', config[zone]);
           config[zone].custom_data.path = message.data[zone].path;
 
           // Обновить конфиг данными по элементам из svg
           if ( message.data[zone].devices ) {
-            console.log('message.data[zone].devices: ', message.data[zone].devices);
-            console.log('config[zone].items: ', config[zone].items);
             for ( const device of Object.keys(message.data[zone].devices) ) {
               const deviceId = message.data[zone].devices[device].id;
-              console.log('device: ', device);
-              console.log('config[zone].items[deviceId]: ', config[zone].items[deviceId]);
-              console.log('message.data[zone].devices[device]: ', message.data[zone].devices[device]);
               if (config[zone].items[deviceId]) {
-                console.log('assign');
                 const configUpdated = Object.assign(config[zone].items[deviceId].custom_data, message.data[zone].devices[device]);
-                console.log('configUpdated: ', configUpdated);
               }
             }
           }
@@ -243,7 +223,6 @@ function generateZoneNames(zone){
 
 function generateConfig(selection: any) {
   return new Promise(function(resolve, reject) {
-    console.log('generateConfig');
     if (selection.length === 1) {
       if (selection[0].type === 'FRAME') {
         let frameWidth = selection[0].width;
@@ -430,7 +409,6 @@ function generateConfig(selection: any) {
 
                     if (rectEl) {
                       // node.setPluginData('componentName', 'rectangle');
-                      console.log('rect node.id: ', node.id);
                       // node.name = node.getPluginData('id');
                       // rectEl.name = selection[0].children[groupName].id;
                       config[zoneId].items[deviceId]['custom_data'].fill = rectEl.fills[0];
@@ -464,11 +442,9 @@ function generateConfig(selection: any) {
                     });
 
                     if (textEl) {
-                      console.log('text node.id: ', node.id);
                       // node.name = node.getPluginData('id');
                       // textEl.name = selection[0].children[groupName].id;
 
-                      console.log('text textEl.name: ', textEl.name);
                       if ( textEl.fills.length > 0 ) {
                         if ( Object.keys(textEl.fills[0]?.boundVariables).length === 0 && textEl.fills[0]?.boundVariables.constructor === Object) {
                           config[zoneId].items[deviceId]['custom_data'].fill = textEl.fills[0];
@@ -477,7 +453,6 @@ function generateConfig(selection: any) {
                           const variableObj = figma.variables.getVariableById(variableId);
                           const variableName = variableObj ? variableObj.name : '';
 
-                          console.log('variableName: ', variableName);
                           switch ( variableName ) {
                             case 'currentColor':
                               config[zoneId].items[deviceId]['custom_data'].fill = 'currentColor';
@@ -818,6 +793,10 @@ function generateConfig(selection: any) {
 
                   case 'locker':
                     node.setPluginData('isExportable', 'false');
+
+                    let cells_quantity = node.getPluginData('cells_quantity') ? node.getPluginData('cells_quantity') : 16;
+                    let cells_numbers = getLockerCellNumbers(node, 'cells_numbers', lockerCellsQuantityDefault);
+
                     config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                     config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
                     config[zoneId].items[deviceId]['custom_data'] = {
@@ -825,7 +804,9 @@ function generateConfig(selection: any) {
                       'template': 'lockerTemplate',
                       'top': (node.y / frameHeight) * 100,
                       'left': (node.x / frameWidth) * 100,
-                      'placement': 'auto'
+                      'placement': 'auto',
+                      'cells_numbers': JSON.parse(JSON.stringify(cells_numbers)),
+                      'length': 16
                     };
                     config[zoneId].items[deviceId].items = {
                       'access_mode': {
@@ -940,11 +921,6 @@ function generateConfig(selection: any) {
                     component: deviceComponentName,
                     zone: 'zone_' + node.parent.id
                   }
-                  // exportedDevices.push({
-                  //   id: node.id,
-                  //   component: deviceComponentName,
-                  //   zone: 'zone_' + node.parent.id
-                  // });
                 }
               }
             }
@@ -966,8 +942,21 @@ function generateConfig(selection: any) {
   });
 }
 
+function getLockerCellNumbers(node, key: string, quantityDefault: number) {
+  const lockerCellsNumbersDefault = Array.from({length: quantityDefault}, (_, i) => i + 1); // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+  let cells_numbers = [];
+  let pluginDataCellsNumbers = node.getPluginData(key);
+  if ( pluginDataCellsNumbers && Array.isArray(JSON.parse(pluginDataCellsNumbers)) && JSON.parse(pluginDataCellsNumbers).length === quantityDefault ) {
+    cells_numbers = pluginDataCellsNumbers;
+  } else {
+    cells_numbers = lockerCellsNumbersDefault;
+    node.setPluginData(key, JSON.stringify(cells_numbers));
+  }
+
+  return cells_numbers
+}
+
 function generateSettings(config: any) {
-  console.log('generateSettings');
   if (config){
     settings = JSON.parse(JSON.stringify(config));
 
@@ -1024,20 +1013,18 @@ const getSerializedSelection = (selection: readonly SceneNode[]) => {
 const sendSerializedSelection = async (selection: readonly SceneNode[]) => {
   const els = await getSerializedSelection(selection);
   figma.ui.postMessage({
-    command: 'getSelectedNode',
-    nodes: els
+    command: 'setup',
+    nodes: els,
+    lockerCellsQuantityDefault: lockerCellsQuantityDefault
   });
-  // messenger.send.selectionChanged(els.filter(x => !!x.svg.length))
 }
 
 function start() {
   // sendInitialized()
 
   figma.on('selectionchange', () => {
-    console.log('Selection changed');
-
     sendSerializedSelection(figma.currentPage.selection);
-  })
+  });
 }
 
 
@@ -1048,11 +1035,17 @@ if (figma.command === 'setup') {
   figma.showUI(__html__, {width: 600, height: 400});
 
   start();
-  figma.ui.postMessage({
-    command: 'setup',
-    data: sendSerializedSelection(figma.currentPage.selection)
-  });
+
+  const node = figma.currentPage.selection[0];
+  if ( node && node.type === "INSTANCE" && node.masterComponent.name === 'locker') {
+    getLockerCellNumbers(node, 'cells_numbers', lockerCellsQuantityDefault);
+  }
+
   sendSerializedSelection(figma.currentPage.selection);
+  // figma.ui.postMessage({
+  //   command: 'setup',
+  //   data: sendSerializedSelection(figma.currentPage.selection)
+  // });
 
 }
 
@@ -1086,7 +1079,6 @@ if (figma.command === 'export') {
       }
     )
     .catch(error => console.log(error));
-
 }
 
 // Open converter
@@ -1116,5 +1108,13 @@ figma.ui.onmessage = async (message) => {
     }
     // close plugin
     figma.closePlugin()
+  }
+
+  if (message.command === 'setLockerData') {
+    const targetNode = await figma.getNodeByIdAsync(message.nodeId);
+    let cells_numbers = message.data;
+    if (Array.isArray(cells_numbers)) {
+      targetNode.setPluginData('cells_numbers', JSON.stringify(cells_numbers));
+    }
   }
 }

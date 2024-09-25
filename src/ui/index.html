@@ -57,6 +57,7 @@
       position: relative;
       border: 1px solid #eee;
       padding: 16px 8px;
+      font-weight: bold;
     }
 
     .grid-item_locker-cell:after {
@@ -86,11 +87,64 @@
       text-align: right;
     }
 
+    form {
+      margin: 0;
+    }
+
+    .form-group {
+      display: flex;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .form-group_block {
+      flex-direction: column;
+      align-items: normal;
+    }
+
     .setup__device {
       display: flex;
       align-items: center;
       gap: 4px;
       margin-bottom: 16px;
+    }
+
+    .locker-index {
+      position: absolute;
+      left: 4px;
+      top: 4px;
+      font-size: 9px;
+      font-weight: normal;
+      opacity: 0.75;
+    }
+
+    .dialog {
+      padding: 0;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      box-shadow: 0px 0px .5px rgba(0, 0, 0, .08), 0px 10px 24px rgba(0, 0, 0, .18), 0px 2px 5px rgba(0, 0, 0, .15);
+    }
+
+    .dialog__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
+      gap: 4px;
+    }
+
+    .btn-close {
+      border: none;
+      margin-right: -4px;
+    }
+
+    .header-title {
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .dialog__body {
+      padding: 4px;
     }
   </style>
 </head>
@@ -105,36 +159,35 @@
               <rect width="22" height="22" x="1" y="1" fill="#30333B" rx="3"/>
               <rect width="22" height="22" x="1" y="1" stroke="#fff" stroke-width="2" rx="3"/>
               <path fill="#fff" d="M8.667 3.667h6.666A1.666 1.666 0 0 1 17 5.332v13.334a1.666 1.666 0 0 1-1.667 1.666H8.667A1.667 1.667 0 0 1 7 18.667V5.332a1.667 1.667 0 0 1 1.667-1.667Zm0 1.666v13.334h6.666V5.332H8.667Zm1.666 7.5H12v3.333h-1.667v-3.333Zm0-5.833h3.334v1.25h-3.334V7Zm0 2.5h3.334v1.25h-3.334V9.5Z"/>
-            </svg> Локер
+            </svg> Локер <span style="font-weight: bold;" id="lockerDeviceInfo"></span>
           </div>
           <div class="setup__form">
-            <dialog open>
-              <p>Greetings, one and all!</p>
-              <form method="dialog">
-                <button>OK</button>
-              </form>
+            <dialog id="cellEditDialog" class="dialog">
+              <header class="dialog__header">
+                <div class="header-title" id="dialogTitle">
+
+                </div>
+                <button class="btn-close" id="dialogCloseBtn" aria-label="close" formnovalidate>✖</button>
+              </header>
+              <div class="dialog__body">
+                <form method="dialog">
+                  <div class="form-group form-group_block">
+                    <label for="lockerCellNumberInput">Номер ячейки</label>
+                    <input type="number" id="lockerCellNumberInput" autofocus="autofocus">
+                  </div>
+                  <div class="form-group">
+                    <input type="checkbox" id="lockerCellNumberCheckbox">
+                    <label for="lockerCellNumberCheckbox">Пронумеровать по возрастанию следующие ячейки</label>
+                  </div>
+                  <button id="dialogLockerCellsSave">OK</button>
+                </form>
+              </div>
             </dialog>
             <form>
               <fieldset>
                 <legend>Номера ячеек</legend>
 
-                <div class="grid-container">
-                  <div class="grid-item grid-item_locker-cell">1</div>
-                  <div class="grid-item grid-item_locker-cell">2</div>
-                  <div class="grid-item grid-item_locker-cell">3</div>
-                  <div class="grid-item grid-item_locker-cell">4</div>
-                  <div class="grid-item grid-item_locker-cell">5</div>
-                  <div class="grid-item grid-item_locker-cell">6</div>
-                  <div class="grid-item grid-item_locker-cell">7</div>
-                  <div class="grid-item grid-item_locker-cell">8</div>
-                  <div class="grid-item grid-item_locker-cell">9</div>
-                  <div class="grid-item grid-item_locker-cell">10</div>
-                  <div class="grid-item grid-item_locker-cell">11</div>
-                  <div class="grid-item grid-item_locker-cell">12</div>
-                  <div class="grid-item grid-item_locker-cell">13</div>
-                  <div class="grid-item grid-item_locker-cell">14</div>
-                  <div class="grid-item grid-item_locker-cell">15</div>
-                  <div class="grid-item grid-item_locker-cell">16</div>
+                <div class="grid-container" id="locker-grid">
                 </div>
               </fieldset>
             </form>
@@ -143,9 +196,6 @@
 
             </div>
           </div>
-
-
-          div.
         </div>
 
       </div>
@@ -166,6 +216,8 @@
 
 <script src="./scripts/jszip.min.js"></script>
 <script>
+
+  let lockerCellsQuantityDefault = 16;
 
 
   async function fileToJSON(file) {
@@ -204,207 +256,49 @@
     return settings
   }
 
-  function renderSetupForm(node, templateEl) {
+  function renderSetupForm(node, quantity) {
+    console.log('renderSetupForm runs: ');
+
+
     // if ("content" in document.createElement("template")) {
     // }
     const deviceFormTemplate = document.getElementById('deviceFormTemplate');
     if (deviceFormTemplate) {
-      // deviceFormTemplate.innerHTML = '';
+      deviceFormTemplate.style.display = 'none';
     }
 
-    if (deviceFormTemplate && node && node.mainComponentName === 'locker') {
-      const LockerFormMeta = [
-        {
-          field: 'cell_1',
-          label: '1',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_2',
-          label: '2',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_3',
-          label: '3',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_4',
-          label: '4',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_5',
-          label: '5',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_6',
-          label: '6',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_7',
-          label: '7',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_8',
-          label: '8',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_9',
-          label: '9',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_10',
-          label: '10',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_11',
-          label: '11',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_12',
-          label: '12',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_13',
-          label: '13',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_14',
-          label: '14',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_15',
-          label: '15',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        },
-        {
-          field: 'cell_16',
-          label: '16',
-          type: 'text',
-          columnWidth: '50%',
-          disabled: false
-        }
-      ]
+    const lockerDeviceInfo = document.getElementById('lockerDeviceInfo');
+    lockerDeviceInfo.innerText = `${node.name}`;
 
-      const formTitle = document.createElement('h3');
-      formTitle.setAttribute('id', 'formTitle');
-      formTitle.innerText = 'Номера ячеек';
-      deviceFormTemplate.appendChild(formTitle);
+    if (deviceFormTemplate && node && node.mainComponentName === 'locker' && node.pluginData) {
+      deviceFormTemplate.style.display = 'block';
+      const lockerCellsNumbersDefault = Array.from({length: quantity}, (_, i) => i + 1); //[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+      console.log('lockerCellsNumbersDefault: ', lockerCellsNumbersDefault);
+      console.log('pluginData: ', node.pluginData);
 
+      // Get locker cells number from plugin data. If empty set numbers to default 1-16.
+      let cells_numbers = [];
 
-
-      const formEl = document.createElement('form');
-      formEl.classList.add('grid1', 'grid_wrap1', 'grid-container');
-      deviceFormTemplate.appendChild(formEl);
-
-      // for (const prop of Object.keys(node.pluginData)) {
-      for ( let i = 0; i < LockerFormMeta.length; i++ ) {
-
-        // console.log('prop: ', prop);
-        // console.log('value: ', node.pluginData[prop]);
-        console.log('LockerFormMeta[i].field: ', LockerFormMeta[i].field);
-
-        // if ( LockerFormMeta[i].field === 'access_mode') {
-        //   const formTitle = document.createElement('h3');
-        //   formTitle.innerText = 'Общие';
-        //   formEl.appendChild(formTitle);
-        //
-        //   const formGroup = document.createElement('div');
-        //   formGroup.classList.add('form-group');
-        //   formEl.appendChild(formGroup);
-        //
-        //   const labelEl = document.createElement('label');
-        //   labelEl.innerText = LockerFormMeta[i].label;
-        //   labelEl.setAttribute('for', LockerFormMeta[i].field);
-        //   formGroup.appendChild(labelEl);
-        //
-        //   const inputEl = document.createElement('input');
-        //   inputEl.setAttribute('type', LockerFormMeta[i].type);
-        //   inputEl.setAttribute('name', 'text');
-        //   inputEl.setAttribute('id', LockerFormMeta[i].field);
-        //   inputEl.setAttribute('class', 'text');
-        //   inputEl.setAttribute('size', 50);
-        //   inputEl.setAttribute('placeholder', 'Команда');
-        //   formGroup.appendChild(inputEl);
-        //
-        //   const formTitle2 = document.createElement('h3');
-        //   formTitle2.innerText = 'Номера ячеек';
-        //   formTitle2.style.marginTop = '16px';
-        //   formEl.appendChild(formTitle2);
-        // }
-
-        if ( LockerFormMeta[i].field.startsWith('cell_') ) {
-          const formGroup = document.createElement('div');
-          formGroup.classList.add('form-group', 'grid__cell_width-501', 'grid-item');
-          formEl.appendChild(formGroup);
-
-          const labelEl = document.createElement('label');
-          labelEl.innerText = LockerFormMeta[i].label;
-          labelEl.classList.add('cell-label');
-          labelEl.setAttribute('for', LockerFormMeta[i].field);
-          formGroup.appendChild(labelEl);
-
-          const inputEl = document.createElement('input');
-          inputEl.setAttribute('type', LockerFormMeta[i].type);
-          inputEl.setAttribute('name', 'text');
-          inputEl.setAttribute('id', LockerFormMeta[i].field);
-          inputEl.setAttribute('class', 'input-text');
-          inputEl.setAttribute('placeholder', '№');
-          formGroup.appendChild(inputEl);
-        }
-
-
+      if ( node.pluginData.cells_numbers) {
+        cells_numbers = JSON.parse(node.pluginData.cells_numbers);
+      } else {
+        cells_numbers = lockerCellsNumbersDefault;
       }
 
+      const gridEl = document.getElementById('locker-grid');
 
-      const formGroup = document.createElement('div');
-      formGroup.classList.add('form-group');
+      gridEl.innerHTML = '';
 
-      formEl.appendChild(formGroup);
+      for ( let i = 0; i < cells_numbers.length; i++ ) {
+        const gridItemTemplate = document.createElement('div');
+        gridItemTemplate.classList.add('grid-item', 'grid-item_locker-cell');
+        gridItemTemplate.innerHTML = `<div class="locker-index">${i + 1}</div>${cells_numbers[i]}`;
+        gridItemTemplate.addEventListener("click", () => {
+          openCellEditModal(cells_numbers[i], i, node);
+        });
 
-
+        gridEl.appendChild(gridItemTemplate);
+      }
     }
   }
 
@@ -412,34 +306,108 @@
   //
   // }
 
+  function openCellEditModal(item, index, node) {
+    const cellEditDialog = document.getElementById('cellEditDialog');
+    const cellDialogTitle = document.getElementById('dialogTitle')
+    const cellIndex = document.getElementById('cellIndex');
+    const lockerCellNumberInput = document.getElementById('lockerCellNumberInput');
+    const saveBtn = document.getElementById('dialogLockerCellsSave');
+    const closeBtn = document.getElementById('dialogCloseBtn');
+    const checkEl = document.getElementById('lockerCellNumberCheckbox');
+
+    cellDialogTitle.innerHTML = `<div id="dialogheader">Локер ${node.name}, ячейка <span id="cellIndex">${index + 1}</span></div>`;
+
+    cellEditDialog.addEventListener('click', function(event) {
+      const rect = cellEditDialog.getBoundingClientRect();
+      const isInDialog = (rect.top <= event.clientY && event.clientY <= rect.top + rect.height &&
+        rect.left <= event.clientX && event.clientX <= rect.left + rect.width);
+      if (!isInDialog) {
+        cellEditDialog.close();
+      }
+    });
+    // cellIndex.innerText = index + 1;
+    lockerCellNumberInput.value = item;
+
+    closeBtn.addEventListener("click", () => {
+      cellEditDialog.close("Cancel editing");
+    });
+
+    const once = {
+      once: true,
+    };
+
+    saveBtn.addEventListener("click", () => {
+      console.log('saveBtn event run: ');
+      console.log('node from openDialog: ', node);
+      const cells_numbers = JSON.parse(node.pluginData.cells_numbers);
+      if (checkEl.checked) {
+        console.log(true);
+        console.log('index: ', index);
+        cells_numbers[index] = parseInt(lockerCellNumberInput.value);
+        for (let i = 0; i < cells_numbers.length; i++) {
+          console.log(i, index);
+          if (i > index) {
+            cells_numbers[i] = cells_numbers[i-1] + 1;
+          }
+
+          console.log(i, cells_numbers[i]);
+        }
+        console.log('cells_numbers checked: ', cells_numbers);
+      } else {
+        console.log(false)
+        cells_numbers[index] = parseInt(lockerCellNumberInput.value);
+      }
+
+      node.pluginData.cells_numbers = JSON.stringify(cells_numbers);
+      // node.pluginData.JSON.parse[cells_numbers[index] = lockerCellNumberInput.value;
+      renderSetupForm(node, lockerCellsQuantityDefault);
+      parent.postMessage({
+        pluginMessage: {
+          command: 'setLockerData',
+          data: cells_numbers,
+          nodeId: node.id
+        }
+      }, '*')
+    }, once);
+
+    cellEditDialog.showModal();
+  }
+
+  function saveLockerCellsNumbers(item) {
+
+  }
+
   onmessage = async (event) => {
     let message = event.data.pluginMessage;
 
-    if (message.command === "getSelectedNode") {
-      console.log('setup');
-      console.log('message.nodes: ', message);
-
-      if ( message.nodes.length === 1 ) {
-        renderSetupForm(message.nodes[0]);
-      } else {
-        parent.postMessage({
-          pluginMessage: {
-            notification: 'Выберите один из инстансов компонентов'
-          }
-        }, '*');
-        // figma.notify('Выберите один из инстансов компонентов');
-        // figma.closePlugin();
-      }
-
-
-    }
+    // if (message.command === "getSelectedNode") {
+    //   console.log('getSelectedNode');
+    //   console.log('message.pluginData from getSelectedNode: ', message.nodes);
+    //
+    //   if ( message.nodes.length === 1 ) {
+    //     console.log('message.pluginData: ', message.pluginData[0]);
+    //     renderSetupForm(message.nodes[0], 16);
+    //   } else {
+    //     parent.postMessage({
+    //       pluginMessage: {
+    //         notification: 'Выберите один из инстансов компонентов'
+    //       }
+    //     }, '*');
+    //     // figma.notify('Выберите один из инстансов компонентов');
+    //     // figma.closePlugin();
+    //   }
+    //
+    //
+    // }
 
     if (message.command === "setup") {
       console.log('setup');
+      console.log('setup message: ', message);
       const formEl = document.getElementById('setup');
       formEl.classList.remove('d-none');
-      console.log(message.data);
-      renderSetupForm(message.data[0]);
+      console.log('message.data from setup: ', message.nodes);
+      lockerCellsQuantityDefault = message.lockerCellsQuantityDefault
+      renderSetupForm(message.nodes[0], message.lockerCellsQuantityDefault);
     }
 
     if (message.command === "export") {
