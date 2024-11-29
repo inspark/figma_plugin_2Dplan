@@ -497,7 +497,12 @@ function generateConfig(selection: any) {
                     }
                     config[zoneId].items[deviceId].items = {
                       'channel': {
-                        'title': 'Channel',
+                        'title': 'Channel MJPEG',
+                        'item_type': 'ITEM_TYPE.single',
+                        'param_type': 'PARAM_TYPE.value'
+                      },
+                      'channel_hls': {
+                        'title': 'Channel HLS',
                         'item_type': 'ITEM_TYPE.single',
                         'param_type': 'PARAM_TYPE.value'
                       },
