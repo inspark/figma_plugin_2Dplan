@@ -17,6 +17,8 @@ const selection: SceneNode = figma.currentPage.selection[0];
 
 const lockerCellsQuantityDefault = 16;
 
+let controlFunctionMapping = [];
+
 function isJsonString(str) {
   try {
       JSON.parse(str);
@@ -901,6 +903,64 @@ function generateConfig(selection: any) {
                       }
                     }
                     break;
+
+
+
+                  case 'rotation_module':
+                    node.setPluginData('isExportable', 'false');
+                    config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
+                    config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
+
+                    const controlFunctionMappingDefault = [
+                      {
+                        'id': 0,
+                        'en': 'Don`t use',
+                        'ru': 'Не использовать'
+                      },
+                      {
+                        'id': 1,
+                        'en': 'Always off',
+                        'ru': 'Всегда выключено'
+                      },
+                      {
+                        'id': 2,
+                        'en': 'Backup only',
+                        'ru': 'Только резервный'
+                      },
+                      {
+                        'id': 3,
+                        'en': 'Reserve rotation',
+                        'ru': 'Ротация резервного'
+                      },
+                      {
+                        'id': 4,
+                        'en': 'Рабочий без ротации',
+                        'ru': 'Working, no rotation'
+                      },
+                      {
+                        'id': 5,
+                        'en': 'Always on',
+                        'ru': 'Всегда включено'
+                      },
+                    ];
+
+                    config[zoneId].items[deviceId]['custom_data'] = {
+                      'title': deviceName,
+                      'template': 'rotationModuleTemplate',
+                      'top': (node.y / frameHeight) * 100,
+                      'left': (node.x / frameWidth) * 100,
+                      'placement': 'auto',
+                      'function_map': controlFunctionMapping.length > 0 ? controlFunctionMapping : controlFunctionMappingDefault
+                    };
+                    config[zoneId].items[deviceId].items = {
+                      'control_function': {
+                        'title': 'Функция управления',
+                        'item_type': 'ITEM_TYPE.single',
+                        'param_type': 'PARAM_TYPE.value'
+                      }
+                    }
+                    break;
+
 
                   case 'object':
                     node.setPluginData('isExportable', 'false');
