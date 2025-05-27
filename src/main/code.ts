@@ -47,6 +47,7 @@ async function preparePlanClone(selection: any) {
       selection[0].setPluginData('componentName', 'rectangle');
       // Duplicate plan node to root
       const planClone = selection[0].clone();
+      console.log('planClone: ', planClone);
 
       // Move
       planClone.x = selection[0].x + selection[0].width * 2;
@@ -93,7 +94,7 @@ async function preparePlanClone(selection: any) {
               config[zone.name].custom_data.text.strokeWidth = node.strokeWeight;
 
               node.visible = false;
-            } else if ( node.type === 'INSTANCE' && ( node.mainComponent.name === 'text' || node.mainComponent.name === 'rectangle' ) && node.visible === true ) {
+            } else if ( node.type === 'INSTANCE'/* && ( node.mainComponent.name === 'text' || node.mainComponent.name === 'rectangle' )*/ && node.visible === true ) {
 
 
               // const mainComponent = await node.getMainComponentAsync();
@@ -143,6 +144,7 @@ async function preparePlanClone(selection: any) {
         } else {
           imageNode = planClone.children[groupName];
         }
+        console.log('end planClone: ', planClone);
       }
 
       if ( imageNode ) {
@@ -163,6 +165,9 @@ async function preparePlanClone(selection: any) {
 
 async function generateSVG(node, format) {
   // Export the vector to SVG
+  console.log('node: ', node);
+  console.log('node.name: ', node.name);
+  console.log('format: ', format);
   svg = await node.exportAsync({ format: format, svgIdAttribute: true, svgOutlineText: false });
   node.remove();
   return svg
@@ -1122,12 +1127,22 @@ if (figma.command === 'export') {
   activateUtilitiesUi(false);
 
   generateConfig(figma.currentPage.selection)
-    .then(() => preparePlanClone(figma.currentPage.selection))
+    .then(() => {
+      console.log('preparePlanClone');
+      return preparePlanClone(figma.currentPage.selection)
+    })
     .then(response => generateSVG(response, 'SVG_STRING'))
-    .then(response => addSVGData(response))
-    .then(() => generateSettings(config))
+    .then(response => {
+      console.log('addSVGData');
+      return addSVGData(response)
+    })
+    .then(() => {
+      console.log('generateSettings');
+      return generateSettings(config)
+    })
     .then(
       () => {
+        console.log('postMessage');
         figma.ui.postMessage({
           command: 'export',
           data: {
