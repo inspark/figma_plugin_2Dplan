@@ -4,6 +4,7 @@
   "api": "1.0.0",
   "main": "code.js",
   "ui": "index.html",
+  "documentAccess": "dynamic-page",
   "editorType": [
     "figma"
   ],
@@ -12,5 +13,13 @@
     {"name": "Export Plan Assets", "command": "export"},
     {"name": "Configuration to Settings", "command": "configToSettings"},
     {"name": "Help", "command": "help"}
-  ]
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://static.figma.com",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com",
+      "https://www.figma.com"
+    ]
+  }
 }

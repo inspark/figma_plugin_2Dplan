@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>Inspark scheme and plan Editor</title>
-  <link rel="stylesheet" href="https://static.figma.com/api/figma-extension-api-0.0.1.css">
+  <link href="https://static.figma.com/api/figma-extension-api-0.0.1.css" rel="stylesheet">
   <style>
     .d-none {
       display: none;
@@ -29,7 +29,6 @@
       width: 100%;
       flex-grow: 0;
     }
-
 
 
     .grid-container {
@@ -149,35 +148,38 @@
   </style>
 </head>
 <body>
-  <div id="setup" class="d-none">
-    <h2>Настройка элементов схемы/плана</h2>
-    <div class="grid">
-      <div class="grid__cell">
-        <div class="setup" id="deviceFormTemplate">
-          <div class="setup__device">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-              <rect width="22" height="22" x="1" y="1" fill="#30333B" rx="3"/>
-              <rect width="22" height="22" x="1" y="1" stroke="#fff" stroke-width="2" rx="3"/>
-              <path fill="#fff" d="M8.667 3.667h6.666A1.666 1.666 0 0 1 17 5.332v13.334a1.666 1.666 0 0 1-1.667 1.666H8.667A1.667 1.667 0 0 1 7 18.667V5.332a1.667 1.667 0 0 1 1.667-1.667Zm0 1.666v13.334h6.666V5.332H8.667Zm1.666 7.5H12v3.333h-1.667v-3.333Zm0-5.833h3.334v1.25h-3.334V7Zm0 2.5h3.334v1.25h-3.334V9.5Z"/>
-            </svg> Локер <span style="font-weight: bold;" id="lockerDeviceInfo"></span>
-          </div>
-          <div class="setup__form">
-            <dialog id="cellEditDialog" class="dialog">
+<div class="d-none" id="setup">
+  <h2>Настройка элементов схемы/плана</h2>
+  <div class="grid">
+    <div class="grid__cell">
+      <div class="setup" id="deviceFormTemplate">
+        <div class="setup__device" id="setupDevice">
+          <svg height="24" viewBox="0 0 24 24"
+               width="24"
+               xmlns="http://www.w3.org/2000/svg">
+            <use xlink:href="#locker"></use>
+          </svg>
+          <span id="deviceInfo" style="font-weight: bold;"></span>
+        </div>
+        <div class="setup__form">
+          <div id="lockerForm">
+            <dialog class="dialog" id="cellEditDialog">
               <header class="dialog__header">
                 <div class="header-title" id="dialogTitle">
 
                 </div>
-                <button class="btn-close" id="dialogCloseBtn" aria-label="close" formnovalidate>✖</button>
+                <button aria-label="close" class="btn-close" formnovalidate id="dialogCloseBtn">✖</button>
               </header>
               <div class="dialog__body">
                 <form method="dialog">
                   <div class="form-group form-group_block">
                     <label for="lockerCellNumberInput">Номер ячейки</label>
-                    <input type="number" id="lockerCellNumberInput">
+                    <input id="lockerCellNumberInput" type="number">
                   </div>
                   <div class="form-group">
-                    <input type="checkbox" id="lockerCellNumberCheckbox">
-                    <label for="lockerCellNumberCheckbox">Пронумеровать по возрастанию следующие ячейки</label>
+                    <input id="lockerCellNumberCheckbox" type="checkbox">
+                    <label for="lockerCellNumberCheckbox">Пронумеровать по возрастанию следующие
+                      ячейки</label>
                   </div>
                   <button id="dialogLockerCellsSave">OK</button>
                 </form>
@@ -191,33 +193,150 @@
                 </div>
               </fieldset>
             </form>
+          </div>
+          <div id="conditionerForm">
+            <form>
+              <fieldset>
+                <legend>ВКЛ/ВЫКЛ</legend>
 
-            <div id="lockerForm">
+                <div class="form-group form-group_block">
+                  <label for="conditionerOnInput">Значение ВКЛ</label>
+                  <input id="conditionerOnInput" data-prop="On" type="number">
+                </div>
 
-            </div>
+                <div class="form-group form-group_block">
+                  <label for="conditionerOffInput">Значение ВЫКЛ</label>
+                  <input id="conditionerOffInput" data-prop="Off" type="number">
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Режимы</legend>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerOffModeInput">Выключен</label>
+                  <input id="conditionerOffModeInput" data-prop="OffMode" type="number">
+                </div>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerCoolingModeInput">Охлаждение</label>
+                  <input id="conditionerCoolingModeInput" data-prop="CoolingMode" type="number">
+                </div>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerHeatingModeInput">Обогрев</label>
+                  <input id="conditionerHeatingModeInput" data-prop="HeatingMode" type="number">
+                </div>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerVentilationModeInput">Вентиляция</label>
+                  <input id="conditionerVentilationModeInput" data-prop="VentilationMode" type="number">
+                </div>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerDryingModeInput">Осушение</label>
+                  <input id="conditionerDryingModeInput" data-prop="DryingMode" type="number">
+                </div>
+
+              </fieldset>
+
+              <fieldset>
+                <legend>Скорости</legend>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerStopVelocityInput">Стоп</label>
+                  <input id="conditionerStopVelocityInput" data-prop="StopVelocity" type="number">
+                </div>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerMinimalVelocityInput">Минимальная</label>
+                  <input id="conditionerMinimalVelocityInput" data-prop="MinimalVelocity" type="number">
+                </div>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerMiddleVelocityInput">Средняя</label>
+                  <input id="conditionerMiddleVelocityInput" data-prop="MiddleVelocity" type="number">
+                </div>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerHighVelocityInput">Высокая</label>
+                  <input id="conditionerHighVelocityInput" data-prop="HighVelocity" type="number">
+                </div>
+
+                <div class="form-group form-group_block">
+                  <label for="conditionerAutoVelocityInput">Авто</label>
+                  <input id="conditionerAutoVelocityInput" data-prop="AutoVelocity" type="number">
+                </div>
+
+              </fieldset>
+
+            </form>
+            <button id="conditionerSave">OK</button>
           </div>
         </div>
-
       </div>
-<!--      <div class="grid__cell grid__cell_width-50">2</div>-->
+      <div class="setup" id="zoneFormTemplate">
+        <div class="setup__device" id="setupZone">
+<!--          <svg height="24" viewBox="0 0 24 24"-->
+<!--               width="24"-->
+<!--               xmlns="http://www.w3.org/2000/svg">-->
+<!--            <use xlink:href="#locker"></use>-->
+<!--          </svg>-->
+          <span id="zoneInfo" style="font-weight: bold;"></span>
+        </div>
+        <div class="setup__form">
+          <form id="zoneForm">
+            <div class="form-group">
+              <input id="zoneCheckBox" type="checkbox">
+              <label for="zoneCheckBox">Контур зоны</label>
+            </div>
+          </form>
+        </div>
+
     </div>
+    <!--      <div class="grid__cell grid__cell_width-50">2</div>-->
   </div>
-  <div id="config-to-settings" class="d-none">
-    <h2>Преобразуйте конфигурацию плана (json) в редактируемые настройки</h2>
+</div>
+<div class="d-none" id="config-to-settings">
+  <h2>Преобразуйте конфигурацию плана (json) в редактируемые настройки</h2>
 
-    <label for="planConfiguration">Загрузите конфиграцию плана (json):</label>
+  <label for="planConfiguration">Загрузите конфиграцию плана (json):</label>
 
-    <input type="file"
-           id="planConfiguration" name="configuration"
-           accept=".json"/>
-    <div id="preview"></div>
-  </div>
+  <input accept=".json"
+         id="planConfiguration" name="configuration"
+         type="file"/>
+  <div id="preview"></div>
+</div>
 
+<template id="setupDeviceTemplate">
+  <svg height="24" viewBox="0 0 24 24"
+       width="24"
+       xmlns="http://www.w3.org/2000/svg">
+    <use xlink:href="#"></use>
+  </svg>
+  Локер <!--<span id="deviceInfo" style="font-weight: bold;"></span>-->
+</template>
+
+<svg style="position:fixed;left:-999em">
+  <symbol id="locker">
+    <rect fill="#30333B" height="22" rx="3" width="22" x="1" y="1"/>
+    <rect height="22" rx="3" stroke="#fff" stroke-width="2" width="22" x="1" y="1"/>
+    <path
+      d="M8.667 3.667h6.666A1.666 1.666 0 0 1 17 5.332v13.334a1.666 1.666 0 0 1-1.667 1.666H8.667A1.667 1.667 0 0 1 7 18.667V5.332a1.667 1.667 0 0 1 1.667-1.667Zm0 1.666v13.334h6.666V5.332H8.667Zm1.666 7.5H12v3.333h-1.667v-3.333Zm0-5.833h3.334v1.25h-3.334V7Zm0 2.5h3.334v1.25h-3.334V9.5Z"
+      fill="#fff"/>
+  </symbol>
+</svg>
 
 <script src="./scripts/jszip.min.js"></script>
 <script>
 
   let lockerCellsQuantityDefault = 16;
+  let nodeSelected;
+
+
+  const once = {
+    once: true,
+  };
 
 
   async function fileToJSON(file) {
@@ -232,7 +351,7 @@
   function generateSettings(config) {
     console.log('generateSettings');
     let settings = {};
-    if (config){
+    if (config) {
       settings = JSON.parse(JSON.stringify(config));
 
       for (const zone of Object.keys(settings)) {
@@ -259,6 +378,7 @@
   function renderSetupForm(node, quantity) {
     console.log('renderSetupForm runs: ');
 
+    nodeSelected = node;
 
     // if ("content" in document.createElement("template")) {
     // }
@@ -267,40 +387,208 @@
       deviceFormTemplate.style.display = 'none';
     }
 
-    const lockerDeviceInfo = document.getElementById('lockerDeviceInfo');
-    lockerDeviceInfo.innerText = `${node.name}`;
 
-    if (deviceFormTemplate && node && node.mainComponentName === 'locker' && node.pluginData) {
-      deviceFormTemplate.style.display = 'block';
-      const lockerCellsNumbersDefault = Array.from({length: quantity}, (_, i) => i + 1); //[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-      console.log('lockerCellsNumbersDefault: ', lockerCellsNumbersDefault);
-      console.log('pluginData: ', node.pluginData);
-
-      // Get locker cells number from plugin data. If empty set numbers to default 1-16.
-      let cells_numbers = [];
-
-      if ( node.pluginData.cells_numbers) {
-        cells_numbers = JSON.parse(node.pluginData.cells_numbers);
-      } else {
-        cells_numbers = lockerCellsNumbersDefault;
+    if (deviceFormTemplate && node && node.pluginData) {
+      const deviceInfo = document.getElementById('deviceInfo');
+      if (deviceInfo) {
+        deviceInfo.innerText = `Название: ${node.name}, компонент: ${node.mainComponentName}`;
       }
+      console.log('node: ', node);
+      console.log('node.mainComponentName: ', node.mainComponentName);
+      let lockerForm = document.getElementById('lockerForm');
+      let conditionerForm = document.getElementById('conditionerForm');
+      let zoneFormTemplate =  document.getElementById('zoneFormTemplate');
+      const zoneCheckBoxEl = document.getElementById('zoneCheckBox');
+      zoneCheckBoxEl.removeEventListener("change", handleZoneCheckBoxEvent);
 
-      const gridEl = document.getElementById('locker-grid');
 
-      gridEl.innerHTML = '';
 
-      for ( let i = 0; i < cells_numbers.length; i++ ) {
-        const gridItemTemplate = document.createElement('div');
-        gridItemTemplate.classList.add('grid-item', 'grid-item_locker-cell');
-        gridItemTemplate.innerHTML = `<div class="locker-index">${i + 1}</div>${cells_numbers[i]}`;
-        gridItemTemplate.addEventListener("click", () => {
-          openCellEditModal(cells_numbers[i], i, node);
-        });
 
-        gridEl.appendChild(gridItemTemplate);
+      if (node.type === 'INSTANCE') {
+        console.log('instance');
+        zoneFormTemplate.style.display = 'none';
+        switch (node.mainComponentName) {
+          case 'locker':
+            deviceFormTemplate.style.display = 'block';
+            conditionerForm.style.display = 'none';
+            lockerForm.style.display = 'block';
+            if ("content" in document.createElement("template")) {
+              let setupDeviceTemplate = document.getElementById('setupDeviceTemplate');
+              let setupDevice = document.getElementById('setupDevice');
+              let setupDeviceClone = setupDeviceTemplate.content.cloneNode(true);
+              let setupDeviceCloneIcon = setupDeviceClone.querySelector('use');
+              setupDeviceCloneIcon.setAttribute('xlink:href', 'locker1');
+
+            }
+            const lockerCellsNumbersDefault = Array.from({length: quantity}, (_, i) => i + 1); //[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+            console.log('lockerCellsNumbersDefault: ', lockerCellsNumbersDefault);
+            console.log('pluginData: ', node.pluginData);
+
+            // Get locker cells number from plugin data. If empty set numbers to default 1-16.
+            let cells_numbers = [];
+
+            if (node.pluginData.cells_numbers) {
+              cells_numbers = JSON.parse(node.pluginData.cells_numbers);
+            } else {
+              cells_numbers = lockerCellsNumbersDefault;
+            }
+
+            const gridEl = document.getElementById('locker-grid');
+
+            gridEl.innerHTML = '';
+
+            for (let i = 0; i < cells_numbers.length; i++) {
+              const gridItemTemplate = document.createElement('div');
+              gridItemTemplate.classList.add('grid-item', 'grid-item_locker-cell');
+              gridItemTemplate.innerHTML = `<div class="locker-index">${i + 1}</div>${cells_numbers[i]}`;
+              gridItemTemplate.addEventListener("click", () => {
+                openCellEditModal(cells_numbers[i], i, node);
+              });
+
+              gridEl.appendChild(gridItemTemplate);
+            }
+            break;
+          case 'conditioner':
+            deviceFormTemplate.style.display = 'block';
+            lockerForm.style.display = 'none';
+            conditionerForm.style.display = 'block';
+
+            let conditionerDefaultSettings = {
+              'On': '',
+              'Off': '',
+              'OffMode': '',
+              'HeatingMode': '',
+              'VentilationMode': '',
+              'DryingMode': '',
+              'StopVelocity': '',
+              'MinimalVelocity': '',
+              'MiddleVelocity': '',
+              'HighVelocity': '',
+              'AutoVelocity': ''
+            };
+
+            if (node.pluginData.settings) {
+              conditionerSettings = JSON.parse(node.pluginData.settings);
+            } else {
+              conditionerSettings = conditionerDefaultSettings;
+            }
+            console.log('conditionerSettings: ', conditionerSettings);
+
+            let settingsNames = [
+              'On', 'Off', 'OffMode', 'CoolingMode', 'HeatingMode', 'VentilationMode', 'DryingMode', 'StopVelocity', 'MinimalVelocity', 'MiddleVelocity', 'HighVelocity', 'AutoVelocity'
+            ];
+
+            const conditionerSaveBtn = document.getElementById('conditionerSave');
+            const inputList = document.querySelectorAll("input[id^='conditioner']");
+            console.log('inputList: ', inputList);
+            for (let i = 0; i <= inputList.length; ++i) {
+              if (inputList[i] && inputList[i]) {
+
+                const prop = inputList[i].dataset.prop;
+                inputList[i].value = parseFloat(conditionerSettings[prop]);
+              }
+            }
+
+            // conditionerSaveBtn.addEventListener('click', handleConditionerBtnSaveEvent(node, inputList, conditionerSettings));
+            conditionerSaveBtn.addEventListener('click', () => {
+              console.log('conditionerSaveBtn event run: ');
+
+              for (let i = 0; i < inputList.length; ++i) {
+                if (inputList[i]) {
+                  const prop = inputList[i].dataset.prop;
+                  if (isNaN(parseFloat(inputList[i].value))) {
+                    conditionerSettings[prop] = ''
+                  } else {
+                    conditionerSettings[prop] = parseFloat(inputList[i].value);
+                  }
+                }
+              }
+              console.log('conditionerSettings: ', conditionerSettings);
+
+              // renderSetupForm(node, lockerCellsQuantityDefault);
+              parent.postMessage({
+                pluginMessage: {
+                  command: 'setConditionerData',
+                  data: conditionerSettings,
+                  nodeId: node.id
+                }
+              }, '*')
+            }, false);
+
+            break;
+
+          default:
+            break;
+        }
+      }
+      else if (node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' ||
+        node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') {
+        console.log('vector');
+        deviceFormTemplate.style.display = 'none';
+        zoneFormTemplate.style.display = 'block';
+        let isZonePath = false;
+        if (node.pluginData.hasOwnProperty('isZonePath')) {
+          node.pluginData.isZonePath === 'true' ? zoneCheckBoxEl.checked = true : zoneCheckBoxEl.checked = false;
+        }
+
+        if (node.pluginData.isZonePath === 'true') {
+          isZonePath = true;
+        } else {
+          isZonePath = false;
+        }
+
+        zoneCheckBoxEl.addEventListener('change', handleZoneCheckBoxEvent(node, isZonePath));
       }
     }
   }
+
+  // TODO: use named event fn instead on anonymous, add removeEventListeter
+  const handleConditionerBtnSaveEvent = (node, inputList, conditionerSettings) => {
+    return function (event) {
+
+      for (let i = 0; i < inputList.length; ++i) {
+        if (inputList[i]) {
+          const prop = inputList[i].dataset.prop;
+          if (isNaN(parseFloat(inputList[i].value))) {
+            conditionerSettings[prop] = ''
+          } else {
+            conditionerSettings[prop] = parseFloat(inputList[i].value);
+          }
+        }
+      }
+
+      // renderSetupForm(node, lockerCellsQuantityDefault);
+      parent.postMessage({
+        pluginMessage: {
+          command: 'setConditionerData',
+          data: conditionerSettings,
+          nodeId: node.id
+        }
+      }, '*')
+    }
+  }
+
+  const handleZoneCheckBoxEvent = (node, isZonePath) => {
+    return function (event) {
+      // This function will be executed when the checkbox's state changes
+      if (node) {
+        if (event.target.checked) {
+          isZonePath = true;
+        } else {
+          isZonePath = false;
+        }
+
+        parent.postMessage({
+          pluginMessage: {
+            command: 'setZoneData',
+            data: isZonePath,
+            nodeId: node.id
+          }
+        }, '*')
+      }
+    }
+  }
+
 
   // saveData() {
   //
@@ -315,9 +603,10 @@
     const closeBtn = document.getElementById('dialogCloseBtn');
     const checkEl = document.getElementById('lockerCellNumberCheckbox');
 
+
     cellDialogTitle.innerHTML = `<div id="dialogheader">Локер ${node.name}, ячейка <span id="cellIndex">${index + 1}</span></div>`;
 
-    cellEditDialog.addEventListener('click', function(event) {
+    cellEditDialog.addEventListener('click', function (event) {
       const rect = cellEditDialog.getBoundingClientRect();
       const isInDialog = (rect.top <= event.clientY && event.clientY <= rect.top + rect.height &&
         rect.left <= event.clientX && event.clientX <= rect.left + rect.width);
@@ -332,27 +621,16 @@
       cellEditDialog.close("Cancel editing");
     });
 
-    const once = {
-      once: true,
-    };
-
     saveBtn.addEventListener("click", () => {
-      console.log('saveBtn event run: ');
-      console.log('node from openDialog: ', node);
       const cells_numbers = JSON.parse(node.pluginData.cells_numbers);
       if (checkEl.checked) {
-        console.log(true);
-        console.log('index: ', index);
         cells_numbers[index] = parseInt(lockerCellNumberInput.value);
         for (let i = 0; i < cells_numbers.length; i++) {
-          console.log(i, index);
           if (i > index) {
-            cells_numbers[i] = cells_numbers[i-1] + 1;
+            cells_numbers[i] = cells_numbers[i - 1] + 1;
           }
 
-          console.log(i, cells_numbers[i]);
         }
-        console.log('cells_numbers checked: ', cells_numbers);
       } else {
         console.log(false)
         cells_numbers[index] = parseInt(lockerCellNumberInput.value);
@@ -423,7 +701,7 @@
         zip.file('plan_svg.svg', svg, {base64: false});
 
 
-        zip.generateAsync({ type: 'blob' })
+        zip.generateAsync({type: 'blob'})
           .then((blob) => {
             const blobURL = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
@@ -455,7 +733,7 @@
           reader.readAsText(event.target.files[0]);
         }
 
-        function onReaderLoad(event){
+        function onReaderLoad(event) {
           const obj = JSON.parse(event.target.result);
           resolve(obj);
         }
@@ -480,7 +758,7 @@
           previewEl.appendChild(textareaWithSetting);
 
           // select textarea text and copy to clipboard
-          btnCopySettinsEl.onclick = function() {
+          btnCopySettinsEl.onclick = function () {
             textareaWithSetting.select();
             document.execCommand('copy');
           }
@@ -518,13 +796,13 @@
         console.log('zone from loop: ', zoneId);
         const zoneEl = svgDomNode.getElementById(zoneId);
         console.log('zone from exp ids: ', zoneEl);
-        if ( zoneEl?.id.startsWith('zone_', 0) ) {
+        if (zoneEl?.id.startsWith('zone_', 0)) {
           const zonePathEl = zoneEl.getElementsByTagName('path')[0];
 
-          svgData[zoneId]= {};
+          svgData[zoneId] = {};
           svgData[zoneId].devices = {};
 
-          if ( zonePathEl ) {
+          if (zonePathEl) {
             svgData[zoneId].path = zonePathEl.getAttribute('d');
             svgData[zoneId].id = zonePathEl.id;
             console.log('html svgData[zone.id]: ', svgData[zoneId]);
@@ -536,11 +814,11 @@
             const deviceEl = svgDomNode.getElementById(deviceId);
             console.log('deviceEl: ', deviceEl);
             console.log('exportedData[zoneId][deviceId]: ', exportedData[zoneId][deviceId]);
-            if ( deviceEl ) {
+            if (deviceEl) {
               switch (exportedData[zoneId][deviceId].component) {
                 case 'rectangle':
                   const rectEl = deviceEl.getElementsByTagName('rect')[0];
-                  if ( rectEl ) {
+                  if (rectEl) {
                     console.log('device from html: ', deviceEl);
                     console.log('device.id from html: ', deviceEl.id);
                     console.log('svgData from html: ', svgData);
@@ -562,7 +840,7 @@
                 case 'text':
                   const textEl = deviceEl.getElementsByTagName('text')[0];
                   const tspanEl = deviceEl.getElementsByTagName('tspan')[0];
-                  if ( textEl && tspanEl ) {
+                  if (textEl && tspanEl) {
                     svgData[zoneId].devices[deviceId] = {
                       id: exportedData[zoneId][deviceId].component + '_' + deviceEl.id,
                       style: textEl.getAttribute('style'),
