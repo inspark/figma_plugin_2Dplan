@@ -275,6 +275,7 @@ function generateConfig(selection: any) {
               if (node.type === "INSTANCE" && node.visible === true) {
                 deviceCount++;
                 console.log('generateConfig node: ', node);
+                console.log('generateConfig node.name: ', node.name);
 
                 const mainComponent = await node.getMainComponentAsync();
                 if (mainComponent) {
@@ -667,7 +668,7 @@ function generateConfig(selection: any) {
                         'heating': node.findChild(n => n.name === 'Heating') ? node.findChild(n => n.name === 'Heating').visible : '',
                         'drying': node.findChild(n => n.name === 'Drying') ? node.findChild(n => n.name === 'Drying').visible : '',
                         'auto': node.findChild(n => n.name === 'Auto') ? node.findChild(n => n.name === 'Auto').visible : '',
-                        'settings': JSON.parse(node.getPluginData('settings'))
+                        'settings': node.getPluginData('settings') ? JSON.parse(node.getPluginData('settings')) : ''
                       }
 
                       config[zoneId].items[deviceId].items = {
