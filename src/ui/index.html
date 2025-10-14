@@ -238,6 +238,11 @@
                   <input id="conditionerDryingModeInput" data-prop="DryingMode" type="number">
                 </div>
 
+                <div class="form-group form-group_block">
+                  <label for="conditionerAutoModeInput">Авто</label>
+                  <input id="conditionerAutoModeInput" data-prop="AutoMode" type="number">
+                </div>
+
               </fieldset>
 
               <fieldset>
@@ -459,7 +464,9 @@
               'OffMode': '',
               'HeatingMode': '',
               'VentilationMode': '',
+              'CoolingMode': '',
               'DryingMode': '',
+              'AutoMode': '',
               'StopVelocity': '',
               'MinimalVelocity': '',
               'MiddleVelocity': '',
@@ -474,15 +481,15 @@
             }
             console.log('conditionerSettings: ', conditionerSettings);
 
-            let settingsNames = [
-              'On', 'Off', 'OffMode', 'CoolingMode', 'HeatingMode', 'VentilationMode', 'DryingMode', 'StopVelocity', 'MinimalVelocity', 'MiddleVelocity', 'HighVelocity', 'AutoVelocity'
-            ];
+            // let settingsNames = [
+            //   'On', 'Off', 'OffMode', 'CoolingMode', 'HeatingMode', 'VentilationMode', 'DryingMode', 'StopVelocity', 'MinimalVelocity', 'MiddleVelocity', 'HighVelocity', 'AutoVelocity'
+            // ];
 
             const conditionerSaveBtn = document.getElementById('conditionerSave');
             const inputList = document.querySelectorAll("input[id^='conditioner']");
             console.log('inputList: ', inputList);
             for (let i = 0; i <= inputList.length; ++i) {
-              if (inputList[i] && inputList[i]) {
+              if (inputList[i]) {
 
                 const prop = inputList[i].dataset.prop;
                 inputList[i].value = parseFloat(conditionerSettings[prop]);
