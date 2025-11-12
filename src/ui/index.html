@@ -278,6 +278,24 @@
             </form>
             <button id="conditionerSave">OK</button>
           </div>
+          <div id="luminairesGroupBlock">
+            <form id="luminairesGroupForm">
+              <div class="form-group">
+                <input id="luminairesGroupCheckBox" type="checkbox">
+                <label for="luminairesGroupCheckBox">Группа светильников</label>
+              </div>
+            </form>
+
+            <div id="luminairesGroupListBlock">
+              Светильники:
+              <div class="luminaires" id="luminairesList">
+                <div class="luminaire"></div>
+              </div>
+            </div>
+
+
+
+          </div>
         </div>
       </div>
       <div class="setup" id="zoneFormTemplate">
@@ -382,6 +400,7 @@
 
   function renderSetupForm(node, quantity) {
     console.log('renderSetupForm runs: ');
+    console.log('renderSetupForm node: ', node);
 
     nodeSelected = node;
 
@@ -393,29 +412,33 @@
     }
 
 
-    if (deviceFormTemplate && node && node.pluginData) {
+
+    if ( deviceFormTemplate && node ) {
       const deviceInfo = document.getElementById('deviceInfo');
       if (deviceInfo) {
         deviceInfo.innerText = `Название: ${node.name}, компонент: ${node.mainComponentName}`;
       }
-      console.log('node: ', node);
-      console.log('node.mainComponentName: ', node.mainComponentName);
-      let lockerForm = document.getElementById('lockerForm');
-      let conditionerForm = document.getElementById('conditionerForm');
-      let zoneFormTemplate =  document.getElementById('zoneFormTemplate');
+      // console.log('node: ', node);
+      // console.log('node.mainComponentName: ', node.mainComponentName);
+      const lockerForm = document.getElementById('lockerForm');
+      const conditionerForm = document.getElementById('conditionerForm');
+      const zoneFormTemplate =  document.getElementById('zoneFormTemplate');
       const zoneCheckBoxEl = document.getElementById('zoneCheckBox');
       zoneCheckBoxEl.removeEventListener("change", handleZoneCheckBoxEvent);
+      const luminairesGroupCheckBoxEl = document.getElementById('luminairesGroupCheckBox');
+      const luminairesGroupBlock = document.getElementById('luminairesGroupBlock');
 
+      zoneFormTemplate.style.display = 'none';
+      conditionerForm.style.display = 'none';
+      luminairesGroupBlock.style.display = 'none';
+      lockerForm.style.display = 'none';
 
-
-
+      // Инстанс компонента
       if (node.type === 'INSTANCE') {
         console.log('instance');
-        zoneFormTemplate.style.display = 'none';
         switch (node.mainComponentName) {
           case 'locker':
             deviceFormTemplate.style.display = 'block';
-            conditionerForm.style.display = 'none';
             lockerForm.style.display = 'block';
             if ("content" in document.createElement("template")) {
               let setupDeviceTemplate = document.getElementById('setupDeviceTemplate');
@@ -426,8 +449,6 @@
 
             }
             const lockerCellsNumbersDefault = Array.from({length: quantity}, (_, i) => i + 1); //[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
-            console.log('lockerCellsNumbersDefault: ', lockerCellsNumbersDefault);
-            console.log('pluginData: ', node.pluginData);
 
             // Get locker cells number from plugin data. If empty set numbers to default 1-16.
             let cells_numbers = [];
@@ -455,7 +476,6 @@
             break;
           case 'conditioner':
             deviceFormTemplate.style.display = 'block';
-            lockerForm.style.display = 'none';
             conditionerForm.style.display = 'block';
 
             let conditionerDefaultSettings = {
@@ -474,20 +494,18 @@
               'AutoVelocity': ''
             };
 
+            let conditionerSettings;
             if (node.pluginData.settings) {
               conditionerSettings = JSON.parse(node.pluginData.settings);
             } else {
               conditionerSettings = conditionerDefaultSettings;
             }
-            console.log('conditionerSettings: ', conditionerSettings);
-
-            // let settingsNames = [
-            //   'On', 'Off', 'OffMode', 'CoolingMode', 'HeatingMode', 'VentilationMode', 'DryingMode', 'StopVelocity', 'MinimalVelocity', 'MiddleVelocity', 'HighVelocity', 'AutoVelocity'
-            // ];
 
             const conditionerSaveBtn = document.getElementById('conditionerSave');
+            conditionerSaveBtn.replaceWith(conditionerSaveBtn.cloneNode(true));
+            const conditionerSaveBtnClone = document.getElementById('conditionerSave');
+
             const inputList = document.querySelectorAll("input[id^='conditioner']");
-            console.log('inputList: ', inputList);
             for (let i = 0; i <= inputList.length; ++i) {
               if (inputList[i]) {
 
@@ -496,9 +514,9 @@
               }
             }
 
+
             // conditionerSaveBtn.addEventListener('click', handleConditionerBtnSaveEvent(node, inputList, conditionerSettings));
-            conditionerSaveBtn.addEventListener('click', () => {
-              console.log('conditionerSaveBtn event run: ');
+            conditionerSaveBtnClone.addEventListener('click', () => {
 
               for (let i = 0; i < inputList.length; ++i) {
                 if (inputList[i]) {
@@ -510,8 +528,6 @@
                   }
                 }
               }
-              console.log('conditionerSettings: ', conditionerSettings);
-
               // renderSetupForm(node, lockerCellsQuantityDefault);
               parent.postMessage({
                 pluginMessage: {
@@ -528,23 +544,79 @@
             break;
         }
       }
-      else if (node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' ||
-        node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') {
+      // Контур зоны
+      else if (
+        node.parentType === 'GROUP' && (
+        node.type === 'VECTOR' ||
+        node.type === 'ELLIPSE' ||
+        node.type === 'LINE' ||
+        node.type === 'POLYGON' ||
+        node.type === 'RECTANGLE' ||
+        node.type === 'STAR' ||
+        node.type === 'BOOLEAN_OPERATION')) {
+
         console.log('vector');
         deviceFormTemplate.style.display = 'none';
         zoneFormTemplate.style.display = 'block';
-        let isZonePath = false;
+        // let isZonePath = false;
         if (node.pluginData.hasOwnProperty('isZonePath')) {
-          node.pluginData.isZonePath === 'true' ? zoneCheckBoxEl.checked = true : zoneCheckBoxEl.checked = false;
+          zoneCheckBoxEl.checked = false;
+        }
+        node.pluginData.isZonePath === 'true' ? zoneCheckBoxEl.checked = true : zoneCheckBoxEl.checked = false;
+        zoneCheckBoxEl.replaceWith(zoneCheckBoxEl.cloneNode(true));
+        const zoneCheckBoxElClone = document.getElementById('zoneCheckBox');
+        // if (node.pluginData.isZonePath === 'true') {
+        //   isZonePath = true;
+        // } else {
+        //   isZonePath = false;
+        // }
+
+        zoneCheckBoxElClone.addEventListener('change', handleZoneCheckBoxEvent(node, node.pluginData.isZonePath));
+      }
+
+      // Группы светильников
+      else if ( node.type === 'FRAME' &&
+        node.parentType === 'GROUP' ) {
+        deviceFormTemplate.style.display = 'block';
+        luminairesGroupBlock.style.display = 'block';
+        const deviceInfo = document.getElementById('deviceInfo');
+        if (deviceInfo) {
+          deviceInfo.innerText = `Название: ${node.name}, устройство: Группа светильников`;
         }
 
-        if (node.pluginData.isZonePath === 'true') {
-          isZonePath = true;
-        } else {
-          isZonePath = false;
+        if (!node.pluginData.hasOwnProperty('deviceType')) {
+          node.pluginData.deviceType = '';
+        }
+        node.pluginData.deviceType === 'luminairesGroup' ? luminairesGroupCheckBoxEl.checked = true : luminairesGroupCheckBoxEl.checked = false;
+
+        // if (node.pluginData.isZonePath === 'true') {
+        //   isZonePath = true;
+        // } else {
+        //   isZonePath = false;
+        // }
+        luminairesGroupCheckBoxEl.replaceWith(luminairesGroupCheckBoxEl.cloneNode(true));
+        const luminairesGroupCheckBoxElClone = document.getElementById('luminairesGroupCheckBox');
+        // luminairesGroupCheckBoxEl.removeEventListener('change', handleLuminairesGroupCheckBoxEvent, false);
+        // debugger;
+        // luminairesGroupCheckBoxElReplaced.addEventListener('change', handleLuminairesGroupCheckBoxEvent.bind(null, node));
+
+        luminairesGroupCheckBoxElClone.addEventListener('change', handleLuminairesGroupCheckBoxEvent(node), false);
+        const luminairesGroupFormEl = document.getElementById('luminairesGroupForm');
+        const luminairesGroupListBlockEl = document.getElementById('luminairesGroupListBlock');
+        const luminairesListEl = document.getElementById('luminairesList');
+        luminairesListEl.innerHTML = '';
+        luminairesGroupListBlockEl.style.display = 'none';
+
+
+        node.children.length > 0 ? luminairesGroupListBlockEl.style.display = 'block' : 'none';
+        for (let i = 0; i < node.children.length; ++i) {
+          if (node.children[i]) {
+            const luminaireEl = document.createElement('div');
+            luminaireEl.innerText = node.children[i].name;
+            luminairesListEl.appendChild(luminaireEl);
+          }
         }
 
-        zoneCheckBoxEl.addEventListener('change', handleZoneCheckBoxEvent(node, isZonePath));
       }
     }
   }
@@ -575,8 +647,9 @@
     }
   }
 
-  const handleZoneCheckBoxEvent = (node, isZonePath) => {
+  const handleZoneCheckBoxEvent = (node) => {
     return function (event) {
+      let isZonePath = false;
       // This function will be executed when the checkbox's state changes
       if (node) {
         if (event.target.checked) {
@@ -592,6 +665,32 @@
             nodeId: node.id
           }
         }, '*')
+      }
+    }
+  }
+
+  // function handleLuminairesGroupCheckBoxEvent(node, event) {
+  const handleLuminairesGroupCheckBoxEvent = (node) => {
+    return function (event) {
+      // event.stopImmediatePropagation();
+      // This function will be executed when the checkbox's state changes
+      let deviceType = '';
+      if (node) {
+        if (event.target.checked) {
+          deviceType = 'luminairesGroup';
+        } else {
+          deviceType = '';
+        }
+
+        parent.postMessage({
+          pluginMessage: {
+            command: 'setLuminairesGroupData',
+            data: deviceType,
+            nodeId: node.id
+          }
+        }, '*');
+
+        // renderSetupForm(node, lockerCellsQuantityDefault);
       }
     }
   }
@@ -686,11 +785,8 @@
     // }
 
     if (message.command === "setup") {
-      console.log('setup');
-      console.log('setup message: ', message);
       const formEl = document.getElementById('setup');
       formEl.classList.remove('d-none');
-      console.log('message.data from setup: ', message.nodes);
       lockerCellsQuantityDefault = message.lockerCellsQuantityDefault
       renderSetupForm(message.nodes[0], message.lockerCellsQuantityDefault);
     }
@@ -793,16 +889,11 @@
 
       let svgData = {};
       const parser = new DOMParser();
-      console.log('message: ', message);
       const exportedData = message.exportedData;
       const svgDomNode = parser.parseFromString(message.svg, "image/svg+xml");
-      console.log('svgDomNode: ', svgDomNode);
-      // console.log('exportedZones: ', exportedZones);
 
       for (const zoneId of Object.keys(exportedData)) {
-        console.log('zone from loop: ', zoneId);
         const zoneEl = svgDomNode.getElementById(zoneId);
-        console.log('zone from exp ids: ', zoneEl);
         if (zoneEl?.id.startsWith('zone_', 0)) {
           const zonePathEl = zoneEl.getElementsByTagName('path')[0];
 
@@ -812,204 +903,84 @@
           if (zonePathEl) {
             svgData[zoneId].path = zonePathEl.getAttribute('d');
             svgData[zoneId].id = zonePathEl.id;
-            console.log('html svgData[zone.id]: ', svgData[zoneId]);
           }
 
           for (const deviceId of Object.keys(exportedData[zoneId])) {
-            console.log('deviceId from loop: ', deviceId);
 
-            const deviceEl = svgDomNode.getElementById(deviceId);
-            console.log('deviceEl: ', deviceEl);
-            console.log('exportedData[zoneId][deviceId]: ', exportedData[zoneId][deviceId]);
-            if (deviceEl) {
-              switch (exportedData[zoneId][deviceId].component) {
-                case 'rectangle':
-                  const rectEl = deviceEl.getElementsByTagName('rect')[0];
-                  if (rectEl) {
-                    console.log('device from html: ', deviceEl);
-                    console.log('device.id from html: ', deviceEl.id);
-                    console.log('svgData from html: ', svgData);
-                    // console.log('group.id from html: ', group.id);
-                    console.log('exportedDevices[i].zone from html: ', exportedData[zoneId][deviceId].zone);
+            if (deviceId) {
+              const deviceName = exportedData[zoneId][deviceId]?.name;
+              const deviceEl = svgDomNode.getElementById(deviceName);
 
+              if (deviceEl) {
+                switch (exportedData[zoneId][deviceId].component) {
+                  case 'luminairesGroup':
+                    // const luminairesGroupEl = deviceEl.getElementsByTagName('rect')[0];
                     svgData[zoneId].devices[deviceId] = {
-                      id: exportedData[zoneId][deviceId].component + '_' + deviceEl.id,
-                      x: rectEl.getAttribute('x'),
-                      y: rectEl.getAttribute('y'),
-                      width: rectEl.getAttribute('width'),
-                      height: rectEl.getAttribute('height'),
-                      rx: rectEl.getAttribute('rx'),
-                      ry: rectEl.getAttribute('ry')
+                      id: exportedData[zoneId][deviceId].component + '_' + deviceId
                     };
-                  }
-                  break;
+                    // for (const luminaireId of Object.keys(exportedData[zoneId][deviceId])) {
+                    //   console.log('luminaireId: ', luminaireId);
+                    svgData[zoneId].devices[deviceId].items = {};
+                    for (const luminaire of deviceEl.children) {
+                      if (luminaire.tagName === 'path') {
+                        const luminaireId = luminaire.getAttribute('id');
 
-                case 'text':
-                  const textEl = deviceEl.getElementsByTagName('text')[0];
-                  const tspanEl = deviceEl.getElementsByTagName('tspan')[0];
-                  if (textEl && tspanEl) {
-                    svgData[zoneId].devices[deviceId] = {
-                      id: exportedData[zoneId][deviceId].component + '_' + deviceEl.id,
-                      style: textEl.getAttribute('style'),
-                      'font-family': textEl.getAttribute('font-family'),
-                      'font-size': textEl.getAttribute('font-size'),
-                      'font-weight': textEl.getAttribute('font-weight'),
-                      'letter-spacing': textEl.getAttribute('letter-spacing'),
-                      x: tspanEl.getAttribute('x'),
-                      y: tspanEl.getAttribute('y')
-                    };
-                  }
-                  break;
+                        svgData[zoneId].devices[deviceId].items[luminaireId] = {
+                          id: luminaireId,
+                          path: luminaire.getAttribute('d'),
+                        };
 
-                default:
-                  console.log('Unknown component in svg.');
+                      } else {
+                        console.error('Luminaire tag name should be a path. Current type: ' + luminaire.tagName);
+                      }
+                    }
+
+                    break;
+                  case 'rectangle':
+                    const rectEl = deviceEl.getElementsByTagName('rect')[0];
+                    if (rectEl) {
+                      svgData[zoneId].devices[deviceId] = {
+                        id: exportedData[zoneId][deviceId].component + '_' + deviceEl.id,
+                        x: rectEl.getAttribute('x'),
+                        y: rectEl.getAttribute('y'),
+                        width: rectEl.getAttribute('width'),
+                        height: rectEl.getAttribute('height'),
+                        rx: rectEl.getAttribute('rx'),
+                        ry: rectEl.getAttribute('ry')
+                      };
+                    }
+                    break;
+
+                  case 'text':
+                    const textEl = deviceEl.getElementsByTagName('text')[0];
+                    const tspanEl = deviceEl.getElementsByTagName('tspan')[0];
+                    if (textEl && tspanEl) {
+                      svgData[zoneId].devices[deviceId] = {
+                        id: exportedData[zoneId][deviceId].component + '_' + deviceEl.id,
+                        style: textEl.getAttribute('style'),
+                        'font-family': textEl.getAttribute('font-family'),
+                        'font-size': textEl.getAttribute('font-size'),
+                        'font-weight': textEl.getAttribute('font-weight'),
+                        'letter-spacing': textEl.getAttribute('letter-spacing'),
+                        x: tspanEl.getAttribute('x'),
+                        y: tspanEl.getAttribute('y')
+                      };
+                    }
+                    break;
+
+                  default:
+                    console.log('Unknown component in svg.');
+                }
               }
-            }
-          }
 
-          // for ( let device of group.children ) {
-          // if ( device && device.id.startsWith('rectangle_', 0) ) {
-          //   console.log('html device.id', device.id);
-          //   const rectEl = device.getElementsByTagName('rect')[0];
-          // if ( rectEl ) {
-          //   console.log('device from html: ', device);
-          //   console.log('device.id from html: ', device.id);
-          //   svgData[group.id].devices[device.id] = {
-          //     id: device.id,
-          //     x: rectEl.getAttribute('x'),
-          //     y: rectEl.getAttribute('y'),
-          //     width: rectEl.getAttribute('width'),
-          //     height: rectEl.getAttribute('height'),
-          //     rx: rectEl.getAttribute('rx'),
-          //     ry: rectEl.getAttribute('ry')
-          //   };
-          // }
-          // } else if ( device?.id.startsWith('text_', 0) ) {
-          // const textEl = device.getElementsByTagName('text')[0];
-          // const tspanEl = device.getElementsByTagName('tspan')[0];
-          // if ( textEl && tspanEl ) {
-          //   svgData[group.id].devices[device.id] = {
-          //     id: device.id,
-          //     style: textEl.getAttribute('style'),
-          //     'font-family': textEl.getAttribute('font-family'),
-          //     'font-size': textEl.getAttribute('font-size'),
-          //     'letter-spacing': textEl.getAttribute('letter-spacing'),
-          //     x: tspanEl.getAttribute('x'),
-          //     y: tspanEl.getAttribute('y')
-          //   };
-          // }
-          // }
-          // }
+            }
+
+          }
         }
 
       }
-
-      // for ( let i = 0; i < exportedZones; i++ ) {
-      //   const zone = svgDomNode.getElementById(exportedZones[i]);
-      //   console.log('zone from exp ids: ', zone);
-      //   if ( zone.id.startsWith('zone_', 0) ) {
-      //     const zonePathEl = zone.getElementsByTagName('path')[0];
-      //
-      //     svgData[zone.id]= {};
-      //     svgData[zone.id].devices = {};
-      //
-      //     if ( zonePathEl ) {
-      //       svgData[zone.id].path = zonePathEl.getAttribute('d');
-      //       svgData[zone.id].id = zonePathEl.id;
-      //       console.log('html svgData[zone.id]: ', svgData[zoneEl.id]);
-      //     }
-      //
-      //     // for ( let device of group.children ) {
-      //     // if ( device && device.id.startsWith('rectangle_', 0) ) {
-      //     //   console.log('html device.id', device.id);
-      //     //   const rectEl = device.getElementsByTagName('rect')[0];
-      //     // if ( rectEl ) {
-      //     //   console.log('device from html: ', device);
-      //     //   console.log('device.id from html: ', device.id);
-      //     //   svgData[group.id].devices[device.id] = {
-      //     //     id: device.id,
-      //     //     x: rectEl.getAttribute('x'),
-      //     //     y: rectEl.getAttribute('y'),
-      //     //     width: rectEl.getAttribute('width'),
-      //     //     height: rectEl.getAttribute('height'),
-      //     //     rx: rectEl.getAttribute('rx'),
-      //     //     ry: rectEl.getAttribute('ry')
-      //     //   };
-      //     // }
-      //     // } else if ( device?.id.startsWith('text_', 0) ) {
-      //     // const textEl = device.getElementsByTagName('text')[0];
-      //     // const tspanEl = device.getElementsByTagName('tspan')[0];
-      //     // if ( textEl && tspanEl ) {
-      //     //   svgData[group.id].devices[device.id] = {
-      //     //     id: device.id,
-      //     //     style: textEl.getAttribute('style'),
-      //     //     'font-family': textEl.getAttribute('font-family'),
-      //     //     'font-size': textEl.getAttribute('font-size'),
-      //     //     'letter-spacing': textEl.getAttribute('letter-spacing'),
-      //     //     x: tspanEl.getAttribute('x'),
-      //     //     y: tspanEl.getAttribute('y')
-      //     //   };
-      //     // }
-      //     // }
-      //     // }
-      //   }
-      // }
-
       console.log('svgData before add devices: ', svgData);
 
-      // for ( let i = 0; i < exportedDevices.length; i++ ) {
-      // const deviceEl = svgDomNode.getElementById(exportedDevices[i].id);
-      // console.log('deviceEl: ', deviceEl);
-      // console.log('exportedDevices[i].component: ', exportedDevices[i].component);
-      // if ( deviceEl ) {
-      //   switch (exportedDevices[i].component) {
-      //     case 'rectangle':
-      //       const rectEl = deviceEl.getElementsByTagName('rect')[0];
-      //       if ( rectEl ) {
-      //         console.log('device from html: ', deviceEl);
-      //         console.log('device.id from html: ', deviceEl.id);
-      //         console.log('svgData from html: ', svgData);
-      //         // console.log('group.id from html: ', group.id);
-      //         console.log('exportedDevices[i].zone from html: ', exportedDevices[i].zone);
-      //
-      //         svgData[exportedDevices[i].zone].devices[deviceEl.id] = {
-      //           id: deviceEl.id,
-      //           x: rectEl.getAttribute('x'),
-      //           y: rectEl.getAttribute('y'),
-      //           width: rectEl.getAttribute('width'),
-      //           height: rectEl.getAttribute('height'),
-      //           rx: rectEl.getAttribute('rx'),
-      //           ry: rectEl.getAttribute('ry')
-      //         };
-      //       }
-      //       break;
-      //
-      //     case 'text':
-      //       const textEl = deviceEl.getElementsByTagName('text')[0];
-      //       const tspanEl = deviceEl.getElementsByTagName('tspan')[0];
-      //       if ( textEl && tspanEl ) {
-      //         svgData[exportedDevices[i].zone].devices[deviceEl.id] = {
-      //           id: deviceEl.id,
-      //           style: textEl.getAttribute('style'),
-      //           'font-family': textEl.getAttribute('font-family'),
-      //           'font-size': textEl.getAttribute('font-size'),
-      //           'letter-spacing': textEl.getAttribute('letter-spacing'),
-      //           x: tspanEl.getAttribute('x'),
-      //           y: tspanEl.getAttribute('y')
-      //         };
-      //       }
-      //       break;
-      //
-      //     default:
-      //       console.log('Unknown component in svg.');
-      //   }
-      // }
-      // }
-
-      // const svgPlanGroupCollection= svgDomNode.getElementsByTagName('g');
-      // for ( let group of svgPlanGroupCollection ) {
-      //
-      // }
       parent.postMessage({
         pluginMessage: {
           command: 'setSVGData',

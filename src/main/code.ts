@@ -41,6 +41,7 @@ function figmaRGBToWebRGB(color): any {
   return rgb
 }
 
+// Создаём копию плана-фрейма для подготовки к экспорту векторных элементов (скрываем то, что не нужно выгружать в svg)
 async function preparePlanClone(selection: any) {
   if (selection.length === 1) {
     if (selection[0].type === 'FRAME') {
@@ -48,7 +49,6 @@ async function preparePlanClone(selection: any) {
       // selection[0].setPluginData('componentName', 'rectangle');
       // Duplicate plan node to root
       const planClone = selection[0].clone();
-      console.log('planClone: ', planClone);
 
       // Move
       planClone.x = selection[0].x + selection[0].width * 2;
@@ -58,27 +58,28 @@ async function preparePlanClone(selection: any) {
       planClone.name = '_' + selection[0].name;
       let imageNode;
 
-      for (const groupName of Object.keys(planClone.children)) {
-        if (planClone.children[groupName] && planClone.children[groupName].type === "GROUP" &&
-          planClone.children[groupName].visible === true) {
-          const zone = planClone.children[groupName];
-          console.log('zone: ', zone);
+      for (const groupIndex of Object.keys(planClone.children)) {
+        const zone = planClone.children[groupIndex];
+        if (zone && zone.type === "GROUP" &&
+          zone.visible === true) {
 
           // Подставляем id ноды из оригинального фрейма
-          zone.name = 'zone_' + selection[0].children[groupName].id;
+          zone.name = 'zone_' + selection[0].children[groupIndex].id;
 
-          for (const node of zone.children) {
-            if ((node.type === 'VECTOR' || node.type === 'ELLIPSE' || node.type === 'LINE' || node.type === 'POLYGON' ||
-                node.type === 'RECTANGLE' || node.type === 'STAR' || node.type === 'BOOLEAN_OPERATION') &&
-              node.getPluginData('isZonePath') === 'true' && node.visible === true) {
-              console.log('zone.children node.name: ', node.name);
-              console.log('zone.children node.type: ', node.type);
+          for (const nodeIndex of Object.keys(zone.children)) {
+            const node = zone.children[nodeIndex];
+
+            // Ищем контур зоны с isZonePath === true в pluginData
+            const zonePathTypes = ['VECTOR', 'ELLIPSE', 'LINE', 'POLIGON', 'RECTANGLE', 'STAR', 'BOOLEAN_OPERATION'];
+            const luminairesGroupTypes = ['FRAME'];
+            if ((zonePathTypes.indexOf(node.type) !== -1) &&
+                node.getPluginData('isZonePath') === 'true' && node.visible === true) {
 
               // Flatten node to Vector, check that path is closed
               const flattenedNode = figma.flatten([node], zone);
 
               if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
-                flattenedNode.name = selection[0].children[groupName].id;
+                flattenedNode.name = selection[0].children[groupIndex].id;
                 config[zone.name].custom_data.fill = flattenedNode.fills[0];
                 config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
                 config[zone.name].custom_data.strokeWidth = flattenedNode.strokeWeight;
@@ -86,6 +87,42 @@ async function preparePlanClone(selection: any) {
                 console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
                 flattenedNode.visible = false;
               }
+            }
+
+            // Ищем группы светильников с deviceType === luminairesGroup в pluginData
+            else if (luminairesGroupTypes.indexOf(node.type) !== -1 &&
+              node.getPluginData('deviceType') === 'luminairesGroup' &&
+              node.visible === true) {
+
+              // Нужно для каждого вектора внутри сохранить его параметры
+              for (const luminaire of node.children) {
+                luminaire.name = luminaire.getPluginData('id');
+                // check if plugin data has prop
+                // Flatten node to Vector
+                if ( luminaire.visible === true ) {
+                  const flattenedNode = figma.flatten([luminaire], node);
+                  // flattenedNode.name = selection[0].children[groupIndex].children[node].children[luminaire].id;
+                  // config[zone.name].custom_data.fill = flattenedNode.fills[0];
+                  // config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
+                  // config[zone.name].custom_data.strokeWidth = flattenedNode.strokeWeight;
+
+                }
+
+              }
+              node.visible = true;
+
+              //   // Flatten node to Vector, check that path is closed
+              //   const flattenedNode = figma.flatten([node], zone);
+              //
+              // if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
+              //   flattenedNode.name = selection[0].children[groupIndex].id;
+              //   config[zone.name].custom_data.fill = flattenedNode.fills[0];
+              //   config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
+              //   config[zone.name].custom_data.strokeWidth = flattenedNode.strokeWeight;
+              // } else {
+              //   console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
+              //   flattenedNode.visible = false;
+              // }
             } else if (node.type === 'TEXT' && node.visible === true) {
               // const zoneTitle = node.name;
               config[zone.name].custom_data.title = node.characters;
@@ -108,8 +145,12 @@ async function preparePlanClone(selection: any) {
               // const mainComponentName = mainComponent?.name;
 
               node.name = node.getPluginData('id');
-              // rectEl.name = selection[0].children[groupName].id;
-              // node.name = node.mainComponent?.name + '_' + selection[0].children[groupName];
+              // rectEl.name = selection[0].children[groupIndex].id;
+              // node.name = node.mainComponent?.name + '_' + selection[0].children[groupIndex];
+
+            } else if (node.type === 'FRAME' && node.type !== 'INSTANCE' && node.parent.type !== "GROUP" && node.visible === true) {
+              node.name = node.getPluginData('id');
+              // Выгрузка групп светильников
             } else {
               // node.opacity = 0;
               node.visible = false;
@@ -149,7 +190,7 @@ async function preparePlanClone(selection: any) {
             }
           }
         } else {
-          imageNode = planClone.children[groupName];
+          imageNode = zone;
         }
         console.log('end planClone: ', planClone);
       }
@@ -172,9 +213,6 @@ async function preparePlanClone(selection: any) {
 
 async function generateSVG(node, format) {
   // Export the vector to SVG
-  console.log('node: ', node);
-  console.log('node.name: ', node.name);
-  console.log('format: ', format);
   svg = await node.exportAsync({format: format, svgIdAttribute: true, svgOutlineText: false})
     .catch((error) => {
       console.error(error);
@@ -240,6 +278,23 @@ function generateZoneNames(zone) {
   return zoneName
 }
 
+class Zone {
+
+}
+
+class Device {
+  constructor() {
+  }
+}
+
+class Graphic {
+
+}
+
+class Parameter {
+
+}
+// Создаём базовый конфиг по всем зонам и устройствам из выделенного плана-фрейма
 function generateConfig(selection: any) {
   return new Promise(async function (resolve, reject) {
     if (selection.length === 1) {
@@ -247,10 +302,10 @@ function generateConfig(selection: any) {
         let frameWidth = selection[0].width;
         let frameHeight = selection[0].height;
 
-        for (const groupName of Object.keys(selection[0].children)) {
-          if (selection[0].children[groupName].type === "GROUP" && selection[0].children[groupName].visible === true) {
+        for (const groupIndex of Object.keys(selection[0].children)) {
+          if (selection[0].children[groupIndex].type === "GROUP" && selection[0].children[groupIndex].visible === true) {
 
-            const zone = selection[0].children[groupName];
+            const zone = selection[0].children[groupIndex];
             zone.setPluginData('id', zone.id);
             const zoneId = 'zone' + '_' + zone.id;
             const zoneName = zone.name;
@@ -270,11 +325,101 @@ function generateConfig(selection: any) {
 
             let deviceCount = 0;
 
-            for (const node of zone.children) {
+            for (const nodeIndex of Object.keys(zone.children)) {
+              const node = zone.children[nodeIndex];
+
+              if (node.type === 'FRAME' && node.visible === true && node.getPluginData('deviceType') === 'luminairesGroup') {
+                deviceCount++;
+
+                let deviceId = 'luminairesGroup_' + node.id;
+                let deviceName = node.name;
+
+                node.setPluginData('isExportable', 'true');
+                config[zoneId].items[deviceId] = {
+                  'title': deviceName,
+                  'items': {}
+                };
+
+
+                config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
+                config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
+                config[zoneId].items[deviceId]['custom_data'] = {
+                  'title': deviceName,
+                  'template': 'luminairesGroupTemplate',
+                  'top': (node.y / frameHeight) * 100,
+                  'left': (node.x / frameWidth) * 100,
+                  'placement': 'auto',
+                  'luminaires': [],
+                  'items': {}
+                }
+
+                config[zoneId].items[deviceId].items = {
+                  'state': {
+                    'title': 'State (on|off)'
+                  },
+                  'dimming': {
+                    'title': 'Dimming'
+                  },
+                  'state_status': {
+                    'title': 'State status'
+                  },
+                  'dimming_status': {
+                    'title': 'Dimming status'
+                  }
+                };
+
+                // const illuminationRect = node.findChild(n => n.name === 'illumination');
+
+                // if (illuminationRect) {
+                //   config[zoneId].items[deviceId]['custom_data']['bs_type'] = illuminationRect.effects[0].type === 'INNER_SHADOW' ? 'inset' : '';
+                //   config[zoneId].items[deviceId]['custom_data']['bs_offset_x_on'] = illuminationRect.effects[0].offset.x;
+                //   config[zoneId].items[deviceId]['custom_data']['bs_offset_y_on'] = illuminationRect.effects[0].offset.y;
+                //   config[zoneId].items[deviceId]['custom_data']['bs_blur_radius_on'] = illuminationRect.effects[0].radius;
+                //   config[zoneId].items[deviceId]['custom_data']['bs_spread_radius_on'] = illuminationRect.effects[0].spread;
+                //   config[zoneId].items[deviceId]['custom_data']['bs_color_on'] = figmaRGBToWebRGB(illuminationRect.effects[0].color);
+                //   config[zoneId].items[deviceId]['custom_data']['fill_on'] = figmaRGBToWebRGB(illuminationRect.fills[0].color);
+                //   config[zoneId].items[deviceId]['custom_data']['opacity_on'] = illuminationRect.fills[0].opacity;
+                // }
+                // console.log('node.children: ', node.children);
+
+                // Получаем список светильников группы
+                let childrenNodesArrFiltered = Array.from(node.children, (child) => {
+                  child.setPluginData('id', child.id);
+                  return {id: child.id, name: child.name}
+                });
+                // const childrenNodesObj = childrenNodesArrFiltered.reduce(
+                //   (obj, item) => Object.assign(obj, {item.id: { name: item.name }}), {});
+                // console.log('childrenNodesObj: ', childrenNodesObj);
+
+
+                const childrenNodesObj = childrenNodesArrFiltered.reduce((a, v) => ({ ...a, [v.id]: {
+                  'title': 'Error ' + v.name,
+                  'item_type': 'ITEM_TYPE.single',
+                  'param_type': 'PARAM_TYPE.value'
+                }}), {});
+                // const childrenNodesObjProps = childrenNodesArrFiltered.reduce((a, v) => {
+                //   a.push({ 'id': v.id, 'name': v.name });
+                //   return a;
+                // }, []);
+                // const childrenNodesObjProps = childrenNodesArrFiltered.reduce((a, v) => ({ ...a, [v.id]: {
+                //   'id': v.id,
+                //   'name': v.name
+                // }}), {});
+                // Object.assign(config[zoneId].items[deviceId].custom_data.items, childrenNodesObj);
+
+                Object.assign(config[zoneId].items[deviceId].items, childrenNodesObj);
+                // config[zoneId].items[deviceId] = {
+                //   'title': deviceName,
+                //   'items': {}
+                // };
+                // Получаем deviceType из pluginData
+
+                // node.setPluginData('id', node.id);
+              }
 
               if (node.type === "INSTANCE" && node.visible === true) {
                 deviceCount++;
-                console.log('generateConfig node: ', node);
+                console.log('generateConfig INSTANCE node: ', node);
                 console.log('generateConfig node.name: ', node.name);
 
                 const mainComponent = await node.getMainComponentAsync();
@@ -315,6 +460,8 @@ function generateConfig(selection: any) {
                   } else {
                     deviceComponentName = mainComponent.name;
                   }
+
+                  node.setPluginData('deviceType', deviceComponentName);
 
                   config[zoneId].items[deviceId] = {
                     'title': deviceName,
@@ -377,7 +524,6 @@ function generateConfig(selection: any) {
                       }
                       break;
 
-
                     case 'door':
                       node.setPluginData('isExportable', 'false');
                       config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
@@ -434,7 +580,7 @@ function generateConfig(selection: any) {
                       if (rectEl) {
                         // node.setPluginData('componentName', 'rectangle');
                         // node.name = node.getPluginData('id');
-                        // rectEl.name = selection[0].children[groupName].id;
+                        // rectEl.name = selection[0].children[groupIndex].id;
                         config[zoneId].items[deviceId]['custom_data'].fill = rectEl.fills[0];
                         config[zoneId].items[deviceId]['custom_data'].stroke = rectEl.strokes[0];
                         config[zoneId].items[deviceId]['custom_data'].strokeWidth = rectEl.strokeWeight;
@@ -467,14 +613,14 @@ function generateConfig(selection: any) {
 
                       if (textEl) {
                         // node.name = node.getPluginData('id');
-                        // textEl.name = selection[0].children[groupName].id;
+                        // textEl.name = selection[0].children[groupIndex].id;
 
                         if (textEl.fills.length > 0) {
                           if (Object.keys(textEl.fills[0]?.boundVariables).length === 0 && textEl.fills[0]?.boundVariables.constructor === Object) {
                             config[zoneId].items[deviceId]['custom_data'].fill = textEl.fills[0];
                           } else {
                             const variableId = textEl.fills[0].boundVariables.color?.id;
-                            const variableObj = figma.variables.getVariableById(variableId);
+                            const variableObj = await figma.variables.getVariableByIdAsync(variableId);
                             const variableName = variableObj ? variableObj.name : '';
 
                             switch (variableName) {
@@ -928,7 +1074,6 @@ function generateConfig(selection: any) {
                       }
                       break;
 
-
                     case 'rotation_module':
                       node.setPluginData('isExportable', 'false');
                       config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
@@ -984,7 +1129,6 @@ function generateConfig(selection: any) {
                       }
                       break;
 
-
                     case 'object':
                       node.setPluginData('isExportable', 'false');
                       config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
@@ -1004,13 +1148,14 @@ function generateConfig(selection: any) {
                   }
 
                   if (node.getPluginData('isExportable') === 'true') {
-                    exportedData['zone_' + node.parent.id][node.id] = {
-                      id: node.id,
-                      component: deviceComponentName,
-                      zone: 'zone_' + node.parent.id
-                    }
+                    setExportedData(node, deviceComponentName)
                   }
                 }
+              }
+
+              if (node.getPluginData('isExportable') === 'true') {
+                const deviceType = node.getPluginData('deviceType') ? node.getPluginData('deviceType') : '';
+                setExportedData(node, deviceType);
               }
             }
           }
@@ -1029,6 +1174,15 @@ function generateConfig(selection: any) {
       figma.closePlugin();
     }
   });
+}
+
+function setExportedData(node, deviceComponentName = '') {
+  exportedData['zone_' + node.parent.id][node.id] = {
+    id: node.id,
+    name: node.name,
+    component: deviceComponentName ? deviceComponentName : '',
+    zone: 'zone_' + node.parent.id
+  }
 }
 
 function getLockerCellNumbers(node, key: string, quantityDefault: number) {
@@ -1088,7 +1242,21 @@ const serialize = async (node: SceneNode): Promise<any> => {
       name: node.name,
       id: node.id,
       type: node.type,
+      parentType: node.parent.type,
       mainComponentName: mainComponent?.name,
+      pluginData: node.getPluginDataKeys().reduce((a, v) => ({...a, [v]: node.getPluginData(v)}), {})
+    }
+  } else if (node.type === 'FRAME' && node.parent.type === 'GROUP') {
+    let childrenNodes = Array.from(node.children, (child) => {
+      return {id: child.id, name: child.name}
+    });
+
+    return {
+      name: node.name,
+      id: node.id,
+      type: node.type,
+      parentType: node.parent.type,
+      children: childrenNodes,
       pluginData: node.getPluginDataKeys().reduce((a, v) => ({...a, [v]: node.getPluginData(v)}), {})
     }
   } else {
@@ -1096,13 +1264,13 @@ const serialize = async (node: SceneNode): Promise<any> => {
       name: node.name,
       id: node.id,
       type: node.type,
+      parentType: node.parent.type,
       pluginData: node.getPluginDataKeys().reduce((a, v) => ({...a, [v]: node.getPluginData(v)}), {})
     }
   }
 }
 
 const getSerializedSelection = (selection: readonly SceneNode[]) => {
-
   return Promise.all(selection.map(serialize))
 }
 
@@ -1132,28 +1300,31 @@ if (figma.command === 'setup') {
   figma.showUI(__html__, {width: 600, height: 400});
 
   // const node = figma.currentPage.selection[0];
-  const node: SceneNode = figma.currentPage.selection[0];
+
   // start();
 
   figma.on('selectionchange', () => {
-    if (node && node.type === "INSTANCE") {
-      getComponentFromInstance(node).then(mainComponent => {
-        if (mainComponent.name === 'locker') {
-          getLockerCellNumbers(node, 'cells_numbers', lockerCellsQuantityDefault);
-        }
-      });
-    }
-    sendSerializedSelection(figma.currentPage.selection);
+    onSetupPrepareSelection().then(nodes => sendSerializedSelection(nodes));
   });
 
+  onSetupPrepareSelection().then(nodes => sendSerializedSelection(nodes));
+
+}
+
+async function onSetupPrepareSelection() {
+  const nodes = figma.currentPage.selection;
+  const node: SceneNode = figma.currentPage.selection[0];
   if (node && node.type === "INSTANCE") {
     getComponentFromInstance(node).then(mainComponent => {
       if (mainComponent.name === 'locker') {
         getLockerCellNumbers(node, 'cells_numbers', lockerCellsQuantityDefault);
       }
     });
+  } else if (node.type === 'FRAME' && node.visible === true) {
+
+    // Для групп светильников
   }
-  sendSerializedSelection(figma.currentPage.selection);
+  return nodes
 }
 
 async function getComponentFromInstance(instanceNode: InstanceNode) {
@@ -1181,7 +1352,6 @@ if (figma.command === 'export') {
     .then(response => generateSVG(response, 'SVG_STRING'))
     .then(response => {
       // console.log('addSVGData');
-      // console.log('after generateSVG response', response);
       return addSVGData(response)
     })
     .then(() => {
@@ -1249,11 +1419,20 @@ figma.ui.onmessage = async (message) => {
   if (message.command === 'setConditionerData') {
     const targetNode = await figma.getNodeByIdAsync(message.nodeId);
     targetNode.setPluginData('settings', JSON.stringify(message.data));
+    console.log('setConditionerData targetNode: ', targetNode, targetNode.name);
   }
 
   if (message.command === 'setZoneData') {
     const targetNode = await figma.getNodeByIdAsync(message.nodeId);
     let isZonePath = message.data;
     targetNode.setPluginData('isZonePath', JSON.stringify(isZonePath));
+  }
+
+  if (message.command === 'setLuminairesGroupData') {
+    // console.log('setLuminairesGroupData message code.ts: ', message);
+    const targetNode = await figma.getNodeByIdAsync(message.nodeId);
+    let deviceType = message.data;
+    targetNode.setPluginData('deviceType', deviceType);
+    debugger;
   }
 }
