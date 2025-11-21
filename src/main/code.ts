@@ -69,91 +69,90 @@ async function preparePlanClone(selection: any) {
           for (const nodeIndex of Object.keys(zone.children)) {
             const node = zone.children[nodeIndex];
 
+
             // Ищем контур зоны с isZonePath === true в pluginData
             const zonePathTypes = ['VECTOR', 'ELLIPSE', 'LINE', 'POLIGON', 'RECTANGLE', 'STAR', 'BOOLEAN_OPERATION'];
             const luminairesGroupTypes = ['FRAME'];
-            if ((zonePathTypes.indexOf(node.type) !== -1) &&
-                node.getPluginData('isZonePath') === 'true' && node.visible === true) {
+            const instanceTypes = ['INSTANCE'];
+            const textTypes = ['TEXT'];
 
-              // Flatten node to Vector, check that path is closed
-              const flattenedNode = figma.flatten([node], zone);
+            if (node.visible === true) {
+              switch (true) {
+                case zonePathTypes.indexOf(node.type) !== -1:
+                  if ( node.getPluginData('isZonePath') !== 'true' ) { break; }
 
-              if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
-                flattenedNode.name = selection[0].children[groupIndex].id;
-                config[zone.name].custom_data.fill = flattenedNode.fills[0];
-                config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
-                config[zone.name].custom_data.strokeWidth = flattenedNode.strokeWeight;
-              } else {
-                console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
-                flattenedNode.visible = false;
+                  // Flatten node to Vector, check that path is closed
+                  const flattenedNode = figma.flatten([node], zone);
+
+                  if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
+                    flattenedNode.name = selection[0].children[groupIndex].id;
+                    config[zone.name].custom_data.fill = flattenedNode.fills[0];
+                    config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
+                    config[zone.name].custom_data.strokeWidth = flattenedNode.strokeWeight;
+                    flattenedNode.visible = true;
+                  } else {
+                    console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
+                    flattenedNode.visible = false;
+                  }
+
+                  break;
+
+                case luminairesGroupTypes.indexOf(node.type) !== -1:
+                  if ( node.getPluginData('isZonePath') === 'true' ) { break; }
+
+                  node.name = node.getPluginData('id');
+                  // Выгрузка групп светильников
+
+                  // Нужно для каждого вектора внутри сохранить его параметры
+                  for (const luminaire of node.children) {
+                    luminaire.name = luminaire.getPluginData('id');
+                    // check if plugin data has prop
+                    // Flatten node to Vector
+                    if ( luminaire.visible === true ) {
+                      const flattenedNode = figma.flatten([luminaire], node);
+                      // flattenedNode.name = selection[0].children[groupIndex].children[node].children[luminaire].id;
+                      // config[zone.name].custom_data.fill = flattenedNode.fills[0];
+                      // config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
+                      // config[zone.name].custom_data.strokeWidth = flattenedNode.strokeWeight;
+
+                    }
+
+                  }
+                  node.visible = true;
+                  break;
+
+                case textTypes.indexOf(node.type) !== -1:
+                  // const zoneTitle = node.name;
+                  config[zone.name].custom_data.title = node.characters;
+                  config[zone.name].title = node.characters;
+                  config[zone.name].custom_data.text = {};
+                  config[zone.name].custom_data.text.x = node.x;
+                  config[zone.name].custom_data.text.y = node.y;
+                  config[zone.name].custom_data.text.fontSize = node.fontSize;
+                  config[zone.name].custom_data.text.fill = node.fills[0];
+                  config[zone.name].custom_data.text.stroke = node.strokes[0];
+                  config[zone.name].custom_data.text.strokeWidth = node.strokeWeight;
+
+                  node.visible = false;
+                  break;
+
+                case instanceTypes.indexOf(node.type) !== -1:
+                  const mainComponent = await node.getMainComponentAsync();
+
+                  if (mainComponent.name === 'text' || mainComponent.name === 'rectangle') {
+                    node.visible = true;
+                  } else {
+                    node.visible = false;
+                  }
+
+                  node.name = node.getPluginData('id');
+                // rectEl.name = selection[0].children[groupIndex].id;
+                // node.name = node.mainComponent?.name + '_' + selection[0].children[groupIndex];
+                  break;
+
+                default:
+                  node.visible = false;
               }
-            }
-
-            // Ищем группы светильников с deviceType === luminairesGroup в pluginData
-            else if (luminairesGroupTypes.indexOf(node.type) !== -1 &&
-              node.getPluginData('deviceType') === 'luminairesGroup' &&
-              node.visible === true) {
-
-              // Нужно для каждого вектора внутри сохранить его параметры
-              for (const luminaire of node.children) {
-                luminaire.name = luminaire.getPluginData('id');
-                // check if plugin data has prop
-                // Flatten node to Vector
-                if ( luminaire.visible === true ) {
-                  const flattenedNode = figma.flatten([luminaire], node);
-                  // flattenedNode.name = selection[0].children[groupIndex].children[node].children[luminaire].id;
-                  // config[zone.name].custom_data.fill = flattenedNode.fills[0];
-                  // config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
-                  // config[zone.name].custom_data.strokeWidth = flattenedNode.strokeWeight;
-
-                }
-
-              }
-              node.visible = true;
-
-              //   // Flatten node to Vector, check that path is closed
-              //   const flattenedNode = figma.flatten([node], zone);
-              //
-              // if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
-              //   flattenedNode.name = selection[0].children[groupIndex].id;
-              //   config[zone.name].custom_data.fill = flattenedNode.fills[0];
-              //   config[zone.name].custom_data.stroke = flattenedNode.strokes[0];
-              //   config[zone.name].custom_data.strokeWidth = flattenedNode.strokeWeight;
-              // } else {
-              //   console.log('Контур зоны не замкнут, экспорт формы зоны не произведен.');
-              //   flattenedNode.visible = false;
-              // }
-            } else if (node.type === 'TEXT' && node.visible === true) {
-              // const zoneTitle = node.name;
-              config[zone.name].custom_data.title = node.characters;
-              config[zone.name].title = node.characters;
-              config[zone.name].custom_data.text = {};
-              config[zone.name].custom_data.text.x = node.x;
-              config[zone.name].custom_data.text.y = node.y;
-              config[zone.name].custom_data.text.fontSize = node.fontSize;
-              config[zone.name].custom_data.text.fill = node.fills[0];
-              config[zone.name].custom_data.text.stroke = node.strokes[0];
-              config[zone.name].custom_data.text.strokeWidth = node.strokeWeight;
-
-              node.visible = false;
-            } else if (node.type === 'INSTANCE'/* && ( node.mainComponent.name === 'text' || node.mainComponent.name === 'rectangle' )*/ && node.visible === true) {
-
-              console.log('INSTANCE');
-              node.visible = false;
-
-              // const mainComponent = await node.getMainComponentAsync();
-              // const mainComponentName = mainComponent?.name;
-
-              node.name = node.getPluginData('id');
-              // rectEl.name = selection[0].children[groupIndex].id;
-              // node.name = node.mainComponent?.name + '_' + selection[0].children[groupIndex];
-
-            } else if (node.type === 'FRAME' && node.type !== 'INSTANCE' && node.parent.type !== "GROUP" && node.visible === true) {
-              node.name = node.getPluginData('id');
-              // Выгрузка групп светильников
-            } else {
-              // node.opacity = 0;
-              node.visible = false;
             }
           }
 
@@ -192,7 +191,6 @@ async function preparePlanClone(selection: any) {
         } else {
           imageNode = zone;
         }
-        console.log('end planClone: ', planClone);
       }
 
       if (imageNode) {
@@ -333,7 +331,7 @@ function generateConfig(selection: any) {
 
                 let deviceId = 'luminairesGroup_' + node.id;
                 let deviceName = node.name;
-
+                node.setPluginData('id', node.id);
                 node.setPluginData('isExportable', 'true');
                 config[zoneId].items[deviceId] = {
                   'title': deviceName,
@@ -419,12 +417,9 @@ function generateConfig(selection: any) {
 
               if (node.type === "INSTANCE" && node.visible === true) {
                 deviceCount++;
-                console.log('generateConfig INSTANCE node: ', node);
-                console.log('generateConfig node.name: ', node.name);
 
                 const mainComponent = await node.getMainComponentAsync();
                 if (mainComponent) {
-                  console.log('main component', mainComponent);
 
                   // В качестве названий объекта используется id элемета из Figma + название компонента.
                   // Для обеспечения совместимости с файлом figma предыдущей версии добавлена проверка parent
@@ -1419,7 +1414,6 @@ figma.ui.onmessage = async (message) => {
   if (message.command === 'setConditionerData') {
     const targetNode = await figma.getNodeByIdAsync(message.nodeId);
     targetNode.setPluginData('settings', JSON.stringify(message.data));
-    console.log('setConditionerData targetNode: ', targetNode, targetNode.name);
   }
 
   if (message.command === 'setZoneData') {
@@ -1433,6 +1427,5 @@ figma.ui.onmessage = async (message) => {
     const targetNode = await figma.getNodeByIdAsync(message.nodeId);
     let deviceType = message.data;
     targetNode.setPluginData('deviceType', deviceType);
-    debugger;
   }
 }
