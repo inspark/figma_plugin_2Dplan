@@ -399,8 +399,6 @@
   }
 
   function renderSetupForm(node, quantity) {
-    console.log('renderSetupForm runs: ');
-    console.log('renderSetupForm node: ', node);
 
     nodeSelected = node;
 
@@ -738,7 +736,6 @@
 
         }
       } else {
-        console.log(false)
         cells_numbers[index] = parseInt(lockerCellNumberInput.value);
       }
 
@@ -895,7 +892,7 @@
       for (const zoneId of Object.keys(exportedData)) {
         const zoneEl = svgDomNode.getElementById(zoneId);
         if (zoneEl?.id.startsWith('zone_', 0)) {
-          const zonePathEl = zoneEl.getElementsByTagName('path')[0];
+          const zonePathEl = zoneEl.querySelector(':scope > path');
 
           svgData[zoneId] = {};
           svgData[zoneId].devices = {};
@@ -909,7 +906,7 @@
 
             if (deviceId) {
               const deviceName = exportedData[zoneId][deviceId]?.name;
-              const deviceEl = svgDomNode.getElementById(deviceName);
+              const deviceEl = svgDomNode.getElementById(deviceId);
 
               if (deviceEl) {
                 switch (exportedData[zoneId][deviceId].component) {
@@ -938,6 +935,7 @@
                     break;
                   case 'rectangle':
                     const rectEl = deviceEl.getElementsByTagName('rect')[0];
+
                     if (rectEl) {
                       svgData[zoneId].devices[deviceId] = {
                         id: exportedData[zoneId][deviceId].component + '_' + deviceEl.id,
@@ -979,7 +977,7 @@
         }
 
       }
-      console.log('svgData before add devices: ', svgData);
+      // console.log('svgData before add devices: ', svgData);
 
       parent.postMessage({
         pluginMessage: {
