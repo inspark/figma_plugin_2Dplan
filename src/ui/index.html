@@ -893,6 +893,7 @@
         const zoneEl = svgDomNode.getElementById(zoneId);
         if (zoneEl?.id.startsWith('zone_', 0)) {
           const zonePathEl = zoneEl.querySelector(':scope > path');
+          const zoneNameEl = zoneEl.querySelector(':scope > text');
 
           svgData[zoneId] = {};
           svgData[zoneId].devices = {};
@@ -902,6 +903,17 @@
             svgData[zoneId].id = zonePathEl.id;
           }
 
+          if (zoneNameEl) {
+            svgData[zoneId].text = {
+              x: zoneNameEl.getElementsByTagName('tspan')[0].getAttribute('x'),
+              y: zoneNameEl.getElementsByTagName('tspan')[0].getAttribute('y'),
+              fontSize: zoneNameEl.getAttribute('font-size'),
+              fontFamily: zoneNameEl.getAttribute('font-family'),
+              letterSpacing: zoneNameEl.getAttribute('letter-spacing'),
+            }
+          }
+
+          // debugger;
           for (const deviceId of Object.keys(exportedData[zoneId])) {
 
             if (deviceId) {
@@ -924,7 +936,7 @@
 
                         svgData[zoneId].devices[deviceId].items[luminaireId] = {
                           id: luminaireId,
-                          path: luminaire.getAttribute('d'),
+                          path: luminaire.getAttribute('d')
                         };
 
                       } else {
