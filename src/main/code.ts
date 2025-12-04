@@ -82,7 +82,7 @@ async function preparePlanClone(selection: any) {
                   if ( node.getPluginData('isZonePath') !== 'true' ) { break; }
 
                   // Flatten node to Vector, check that path is closed
-                  const flattenedNode = figma.flatten([node], zone);
+                  const flattenedNode = figma.flatten([node], zone, zone.children?.length);
 
                   if (flattenedNode && flattenedNode.vectorPaths[0].windingRule !== 'NONE') {
                     flattenedNode.name = selection[0].children[groupIndex].id;
@@ -133,7 +133,7 @@ async function preparePlanClone(selection: any) {
                   config[zone.name].custom_data.text.stroke = node.strokes[0];
                   config[zone.name].custom_data.text.strokeWidth = node.strokeWeight;
 
-                  node.visible = false;
+                  node.visible = true;
                   break;
 
                 case instanceTypes.indexOf(node.type) !== -1:
@@ -157,37 +157,37 @@ async function preparePlanClone(selection: any) {
           }
 
           // Если в зоне нет текстового слоя, сгенерить такой из названия зоны (группы)
-          if (!(config[zone.name].custom_data.hasOwnProperty('text')) && (config[zone.name].custom_data.hasOwnProperty('path'))) {
-            const font = {family: 'Open Sans', style: 'Regular'};
-
-            try {
-              // Load the font in the text node before setting the characters
-              await fontLoadingFunction(font).then(() => {
-                // generateZoneNames(zone)
-                let zoneTextNode = figma.createText();
-                zoneTextNode.fontName = font;
-                zoneTextNode.fontSize = 11;
-                zoneTextNode.characters = config[zone.name].custom_data.title;
-                zoneTextNode.x = Number(zone.x) + (Number(zone.width) / 2) - (Number(zoneTextNode.width) / 2);
-                zoneTextNode.y = Number(zone.y) + (Number(zone.height) / 2) + (Number(zoneTextNode.height) / 2);
-                zoneTextNode.fills = [{type: 'SOLID', color: {r: 1, g: 0, b: 0}}];
-
-                return zoneTextNode
-
-              }).then(zoneTextNode => {
-                config[zone.name].custom_data.text = {};
-                config[zone.name].custom_data.text.x = zoneTextNode.x;
-                config[zone.name].custom_data.text.y = zoneTextNode.y;
-                config[zone.name].custom_data.text.fontSize = zoneTextNode.fontSize;
-                config[zone.name].custom_data.text.fill = zoneTextNode.fills[0];
-                config[zone.name].custom_data.text.stroke = zoneTextNode.strokes[0];
-                config[zone.name].custom_data.text.strokeWidth = zoneTextNode.strokeWeight;
-              });
-
-            } catch (err) {
-              console.error(`Error: ${err}`);
-            }
-          }
+          // if (!(config[zone.name].custom_data.hasOwnProperty('text')) && (config[zone.name].custom_data.hasOwnProperty('path'))) {
+          //   const font = {family: 'Open Sans', style: 'Regular'};
+          //
+          //   try {
+          //     // Load the font in the text node before setting the characters
+          //     await fontLoadingFunction(font).then(() => {
+          //       // generateZoneNames(zone)
+          //       let zoneTextNode = figma.createText();
+          //       zoneTextNode.fontName = font;
+          //       zoneTextNode.fontSize = 11;
+          //       zoneTextNode.characters = config[zone.name].custom_data.title;
+          //       zoneTextNode.x = Number(zone.x) + (Number(zone.width) / 2) - (Number(zoneTextNode.width) / 2);
+          //       zoneTextNode.y = Number(zone.y) + (Number(zone.height) / 2) + (Number(zoneTextNode.height) / 2);
+          //       zoneTextNode.fills = [{type: 'SOLID', color: {r: 1, g: 0, b: 0}}];
+          //
+          //       return zoneTextNode
+          //
+          //     }).then(zoneTextNode => {
+          //       config[zone.name].custom_data.text = {};
+          //       config[zone.name].custom_data.text.x = zoneTextNode.x;
+          //       config[zone.name].custom_data.text.y = zoneTextNode.y;
+          //       config[zone.name].custom_data.text.fontSize = zoneTextNode.fontSize;
+          //       config[zone.name].custom_data.text.fill = zoneTextNode.fills[0];
+          //       config[zone.name].custom_data.text.stroke = zoneTextNode.strokes[0];
+          //       config[zone.name].custom_data.text.strokeWidth = zoneTextNode.strokeWeight;
+          //     });
+          //
+          //   } catch (err) {
+          //     console.error(`Error: ${err}`);
+          //   }
+          // }
         } else {
           imageNode = zone;
         }
@@ -217,7 +217,7 @@ async function generateSVG(node, format) {
       return ''
     });
   node.remove();
-  console.log('generateSVG: ', svg);
+  // console.log('generateSVG: ', svg);
   return svg ? svg : ''
 }
 
@@ -229,7 +229,9 @@ function addSVGData(svg) {
       if (message.command === 'setSVGData') {
         for (const zone of Object.keys(message.data)) {
           config[zone].custom_data.path = message.data[zone].path;
-
+          if (config[zone].custom_data.text) {
+            const zoneUpdated = Object.assign(config[zone].custom_data.text, message.data[zone].text);
+          }
           // Обновить конфиг данными по элементам из svg
           if (message.data[zone].devices) {
             for (const device of Object.keys(message.data[zone].devices)) {
@@ -1341,7 +1343,7 @@ if (figma.command === 'export') {
 
   generateConfig(figma.currentPage.selection)
     .then(() => {
-      console.log('preparePlanClone');
+      // console.log('preparePlanClone');
       return preparePlanClone(figma.currentPage.selection)
     })
     .then(response => generateSVG(response, 'SVG_STRING'))
@@ -1350,12 +1352,12 @@ if (figma.command === 'export') {
       return addSVGData(response)
     })
     .then(() => {
-      console.log('generateSettings');
+      // console.log('generateSettings');
       return generateSettings(config)
     })
     .then(
       () => {
-        console.log('postMessage');
+        // console.log('postMessage');
         figma.ui.postMessage({
           command: 'export',
           data: {
