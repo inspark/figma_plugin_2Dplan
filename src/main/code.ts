@@ -481,6 +481,7 @@ function generateConfig(selection: any) {
                         'has_temperature_filter': node.variantProperties ? node.variantProperties['Temperature'] : '',
                         'has_humidity_filter': node.variantProperties ? node.variantProperties['Humidity'] : '',
                         'has_co2_filter': node.variantProperties ? node.variantProperties['CO2'] : '',
+                        'has_co_filter': node.variantProperties ? node.variantProperties['CO'] : '',
                         'has_noise_filter': node.variantProperties ? node.variantProperties['Noise'] : '',
                         'has_lighting_filter': node.variantProperties ? node.variantProperties['Lightness'] : '',
                       }
@@ -496,6 +497,9 @@ function generateConfig(selection: any) {
                         },
                         'co2': {
                           'title': 'CO2'
+                        },
+                        'co': {
+                          'title': 'CO'
                         },
                         'lighting': {
                           'title': 'Lighting'
