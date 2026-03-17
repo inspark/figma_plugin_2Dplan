@@ -888,9 +888,11 @@ function generateConfig(selection: any) {
 
                     case 'universal':
                       node.setPluginData('isExportable', 'false');
+                      const universal_settings = node.getPluginData('settings') ? JSON.parse(node.getPluginData('settings')) : '';
                       config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                       config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
                       const childMainComponent = await node.children[0].getMainComponentAsync();
+
                       config[zoneId].items[deviceId]['custom_data'] = {
                         'title': deviceName,
                         'template': 'universalTemplate',
@@ -903,6 +905,7 @@ function generateConfig(selection: any) {
                         'icon_path': childMainComponent?.children[0]?.fillGeometry,
                         'icon_path_x': childMainComponent?.children[0]?.x,
                         'icon_path_y': childMainComponent?.children[0]?.y,
+                        'number_of_params': universal_settings.NumberOfParams
                       };
                       if (isJsonString(mainComponent.description)) {
                         config[zoneId].items[deviceId]['custom_data']['device_type_description_en'] = JSON.parse(mainComponent.description).en;
@@ -911,58 +914,69 @@ function generateConfig(selection: any) {
                         config[zoneId].items[deviceId]['custom_data']['device_type_description_en'] = '';
                         config[zoneId].items[deviceId]['custom_data']['device_type_description_ru'] = '';
                       }
-                      config[zoneId].items[deviceId].items = {
-                        'parameter_1': {
-                          'title': 'Parameter 1',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        },
-                        'parameter_2': {
-                          'title': 'Parameter 2',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        },
-                        'parameter_3': {
-                          'title': 'Parameter 3',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        },
-                        'parameter_4': {
-                          'title': 'Parameter 4',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        },
-                        'parameter_5': {
-                          'title': 'Parameter 5',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        },
-                        'parameter_6': {
-                          'title': 'Parameter 6',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        },
-                        'parameter_7': {
-                          'title': 'Parameter 7',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        },
-                        'parameter_8': {
-                          'title': 'Parameter 8',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        },
-                        'parameter_9': {
-                          'title': 'Parameter 9',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        },
-                        'parameter_10': {
-                          'title': 'Parameter 10',
-                          'item_type': 'ITEM_TYPE.single',
-                          'param_type': 'PARAM_TYPE.value'
-                        }
+
+                      function Param(index) {
+                        this.title = 'Parameter ' + index + '';
+                        this.item_type = 'ITEM_TYPE.single';
+                        this.param_type = 'PARAM_TYPE.value'
                       }
+
+                      for (let i = 1; i <= universal_settings.NumberOfParams; i++) {
+                        config[zoneId].items[deviceId].items['parameter_' + i] = new Param(i);
+                      }
+
+                      // config[zoneId].items[deviceId].items = {
+                      //   'parameter_1': {
+                      //     'title': 'Parameter 1',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   },
+                      //   'parameter_2': {
+                      //     'title': 'Parameter 2',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   },
+                      //   'parameter_3': {
+                      //     'title': 'Parameter 3',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   },
+                      //   'parameter_4': {
+                      //     'title': 'Parameter 4',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   },
+                      //   'parameter_5': {
+                      //     'title': 'Parameter 5',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   },
+                      //   'parameter_6': {
+                      //     'title': 'Parameter 6',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   },
+                      //   'parameter_7': {
+                      //     'title': 'Parameter 7',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   },
+                      //   'parameter_8': {
+                      //     'title': 'Parameter 8',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   },
+                      //   'parameter_9': {
+                      //     'title': 'Parameter 9',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   },
+                      //   'parameter_10': {
+                      //     'title': 'Parameter 10',
+                      //     'item_type': 'ITEM_TYPE.single',
+                      //     'param_type': 'PARAM_TYPE.value'
+                      //   }
+                      // }
                       break;
 
                     case 'locker':
@@ -1413,6 +1427,11 @@ figma.ui.onmessage = async (message) => {
     }
   }
 
+  if (message.command === 'setUniversalData') {
+    const targetNode = await figma.getNodeByIdAsync(message.nodeId);
+    targetNode.setPluginData('settings', JSON.stringify(message.data));
+  }
+
   if (message.command === 'setConditionerData') {
     const targetNode = await figma.getNodeByIdAsync(message.nodeId);
     targetNode.setPluginData('settings', JSON.stringify(message.data));
@@ -1425,7 +1444,6 @@ figma.ui.onmessage = async (message) => {
   }
 
   if (message.command === 'setLuminairesGroupData') {
-    // console.log('setLuminairesGroupData message code.ts: ', message);
     const targetNode = await figma.getNodeByIdAsync(message.nodeId);
     let deviceType = message.data;
     targetNode.setPluginData('deviceType', deviceType);
