@@ -194,6 +194,19 @@
               </fieldset>
             </form>
           </div>
+          <div id="universalForm">
+            <form>
+              <fieldset>
+                <legend>Настройки</legend>
+
+                <div class="form-group form-group_block">
+                  <label for="universalNumberOfParametersInput">Количество параметров</label>
+                  <input id="universalNumberOfParametersInput" data-prop="NumberOfParams" type="number">
+                </div>
+              </fieldset>
+            </form>
+            <button id="universalSave">OK</button>
+          </div>
           <div id="conditionerForm">
             <form>
               <fieldset>
@@ -420,6 +433,7 @@
       // console.log('node.mainComponentName: ', node.mainComponentName);
       const lockerForm = document.getElementById('lockerForm');
       const conditionerForm = document.getElementById('conditionerForm');
+      const universalForm = document.getElementById('universalForm');
       const zoneFormTemplate =  document.getElementById('zoneFormTemplate');
       const zoneCheckBoxEl = document.getElementById('zoneCheckBox');
       zoneCheckBoxEl.removeEventListener("change", handleZoneCheckBoxEvent);
@@ -428,13 +442,13 @@
 
       zoneFormTemplate.style.display = 'none';
       conditionerForm.style.display = 'none';
+      universalForm.style.display = 'none';
       luminairesGroupBlock.style.display = 'none';
       lockerForm.style.display = 'none';
 
       // Инстанс компонента
       if (node.type === 'INSTANCE') {
-        console.log('instance');
-        switch (node.mainComponentName) {
+        switch (node.pluginData?.deviceType) {
           case 'locker':
             deviceFormTemplate.style.display = 'block';
             lockerForm.style.display = 'block';
@@ -471,6 +485,59 @@
 
               gridEl.appendChild(gridItemTemplate);
             }
+            break;
+          case 'universal':
+            deviceFormTemplate.style.display = 'block';
+            universalForm.style.display = 'block';
+
+            let universalDefaultSettings = {
+              'NumberOfParams': '10'
+            }
+
+            let universalSettings;
+            if (node.pluginData.settings) {
+              universalSettings = JSON.parse(node.pluginData.settings);
+            } else {
+              universalSettings = universalDefaultSettings;
+            }
+
+            const universalSaveBtn = document.getElementById('universalSave');
+            universalSaveBtn.replaceWith(universalSaveBtn.cloneNode(true));
+            const universalSaveBtnClone = document.getElementById('universalSave');
+
+            const universalInputsList = document.querySelectorAll("input[id^='universal']");
+
+            for (let i = 0; i <= universalInputsList.length; ++i) {
+              if (universalInputsList[i]) {
+
+                const prop = universalInputsList[i].dataset.prop;
+                universalInputsList[i].value = parseFloat(universalSettings[prop]);
+              }
+            }
+
+
+            // conditionerSaveBtn.addEventListener('click', handleConditionerBtnSaveEvent(node, inputList, conditionerSettings));
+            universalSaveBtnClone.addEventListener('click', () => {
+
+              for (let i = 0; i < universalInputsList.length; ++i) {
+                if (universalInputsList[i]) {
+                  const prop = universalInputsList[i].dataset.prop;
+                  if (isNaN(parseFloat(universalInputsList[i].value))) {
+                    universalSettings[prop] = ''
+                  } else {
+                    universalSettings[prop] = parseFloat(universalInputsList[i].value);
+                  }
+                }
+              }
+              // renderSetupForm(node, lockerCellsQuantityDefault);
+              parent.postMessage({
+                pluginMessage: {
+                  command: 'setUniversalData',
+                  data: universalSettings,
+                  nodeId: node.id
+                }
+              }, '*')
+            }, false);
             break;
           case 'conditioner':
             deviceFormTemplate.style.display = 'block';
@@ -553,7 +620,6 @@
         node.type === 'STAR' ||
         node.type === 'BOOLEAN_OPERATION')) {
 
-        console.log('vector');
         deviceFormTemplate.style.display = 'none';
         zoneFormTemplate.style.display = 'block';
         // let isZonePath = false;
@@ -761,26 +827,6 @@
   onmessage = async (event) => {
     let message = event.data.pluginMessage;
 
-    // if (message.command === "getSelectedNode") {
-    //   console.log('getSelectedNode');
-    //   console.log('message.pluginData from getSelectedNode: ', message.nodes);
-    //
-    //   if ( message.nodes.length === 1 ) {
-    //     console.log('message.pluginData: ', message.pluginData[0]);
-    //     renderSetupForm(message.nodes[0], 16);
-    //   } else {
-    //     parent.postMessage({
-    //       pluginMessage: {
-    //         notification: 'Выберите один из инстансов компонентов'
-    //       }
-    //     }, '*');
-    //     // figma.notify('Выберите один из инстансов компонентов');
-    //     // figma.closePlugin();
-    //   }
-    //
-    //
-    // }
-
     if (message.command === "setup") {
       const formEl = document.getElementById('setup');
       formEl.classList.remove('d-none');
@@ -927,8 +973,7 @@
                     svgData[zoneId].devices[deviceId] = {
                       id: exportedData[zoneId][deviceId].component + '_' + deviceId
                     };
-                    // for (const luminaireId of Object.keys(exportedData[zoneId][deviceId])) {
-                    //   console.log('luminaireId: ', luminaireId);
+
                     svgData[zoneId].devices[deviceId].items = {};
                     for (const luminaire of deviceEl.children) {
                       if (luminaire.tagName === 'path') {
