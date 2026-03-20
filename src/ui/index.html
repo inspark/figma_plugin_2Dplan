@@ -491,7 +491,7 @@
             universalForm.style.display = 'block';
 
             let universalDefaultSettings = {
-              'NumberOfParams': '10'
+              'NumberOfParams': 10
             }
 
             let universalSettings;
@@ -509,7 +509,6 @@
 
             for (let i = 0; i <= universalInputsList.length; ++i) {
               if (universalInputsList[i]) {
-
                 const prop = universalInputsList[i].dataset.prop;
                 universalInputsList[i].value = parseFloat(universalSettings[prop]);
               }
@@ -523,7 +522,7 @@
                 if (universalInputsList[i]) {
                   const prop = universalInputsList[i].dataset.prop;
                   if (isNaN(parseFloat(universalInputsList[i].value))) {
-                    universalSettings[prop] = ''
+                    universalSettings[prop] = parseFloat(universalDefaultSettings.NumberOfParams);
                   } else {
                     universalSettings[prop] = parseFloat(universalInputsList[i].value);
                   }
