@@ -888,10 +888,20 @@ function generateConfig(selection: any) {
 
                     case 'universal':
                       node.setPluginData('isExportable', 'false');
-                      const universal_settings = node.getPluginData('settings') ? JSON.parse(node.getPluginData('settings')) : '';
+                      const universal_settings_default = {
+                        NumberOfParams: 10
+                      }
+                      let universal_settings = node.getPluginData('settings') ? JSON.parse(node.getPluginData('settings')) : universal_settings_default;
+                      if (!universal_settings) {
+                        universal_settings = universal_settings_default;
+                      }
                       config[zoneId].items[deviceId]['item_type'] = 'ITEM_TYPE.single';
                       config[zoneId].items[deviceId]['param_type'] = 'PARAM_TYPE.signal';
                       const childMainComponent = await node.children[0].getMainComponentAsync();
+                      if (!universal_settings.hasOwnProperty('NumberOfParams') || universal_settings.NumberOfParams === '') {
+                        console.log('universal_settings: ', universal_settings);
+                        universal_settings.NumberOfParams = 10;
+                      }
 
                       config[zoneId].items[deviceId]['custom_data'] = {
                         'title': deviceName,
